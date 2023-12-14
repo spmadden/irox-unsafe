@@ -1,0 +1,18 @@
+[package]
+name = "irox-unsafe-"
+description = ""
+keywords = ["irox", "irox-unsafe"]
+categories = []
+version= "0.1.0"
+edition.workspace = true
+authors.workspace = true
+homepage.workspace = true
+license.workspace = true
+exclude.workspace = true
+repository.workspace = true
+readme = "README.md"
+
+[lints]
+workspace = true
+
+[dependencies]
