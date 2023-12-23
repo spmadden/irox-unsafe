@@ -1,5 +1,5 @@
 [package]
-name = "irox-unsafe-"
+name = "{{project-name}}"
 description = ""
 keywords = ["irox", "irox-unsafe"]
 categories = []

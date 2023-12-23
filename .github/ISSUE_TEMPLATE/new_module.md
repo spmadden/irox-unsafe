@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
- - [ ] Update top level `irox-*` module:
+ - [ ] Update top level `irox` module:
     - [ ] Update `Cargo.toml`
     - [ ] Update `lib.rs`
  - [ ] Update top level `README.md`
