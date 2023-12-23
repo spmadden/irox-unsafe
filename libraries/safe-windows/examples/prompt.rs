@@ -2,7 +2,7 @@ use irox_safe_windows::credentials::{prompt, Credentials, PromptOptions};
 use irox_safe_windows::error::Error;
 
 #[allow(clippy::print_stdout)]
-
+#[cfg(windows)]
 pub fn main() -> Result<(), Error> {
     let options = PromptOptions::new()
         .with_title("Little Title Text!")
@@ -17,4 +17,9 @@ pub fn main() -> Result<(), Error> {
     println!("Save Checkbox Selected: {user_requested_save}");
 
     Ok(())
+}
+
+#[cfg(not(windows))]
+pub fn main() {
+    eprintln!("This example only supported on windows targets.");
 }

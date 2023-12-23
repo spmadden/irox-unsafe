@@ -3,7 +3,7 @@ use irox_safe_windows::credentials::{
 };
 use irox_safe_windows::error::Error;
 #[allow(clippy::print_stdout)]
-
+#[cfg(windows)]
 pub fn main() -> Result<(), Error> {
     let target = "irox-safe-windows-test-cred";
     let options = PromptOptions::new()
@@ -20,4 +20,9 @@ pub fn main() -> Result<(), Error> {
     delete_cred(target)?;
 
     Ok(())
+}
+
+#[cfg(not(windows))]
+pub fn main() {
+    eprintln!("This example only supported on windows targets.");
 }
