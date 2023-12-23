@@ -5,13 +5,15 @@ use windows::core::imp::CoTaskMemFree;
 use windows::core::{HSTRING, PCWSTR, PWSTR};
 use windows::Win32::Foundation::{
     BOOL, ERROR_ACCESS_DENIED, ERROR_ACCOUNT_DISABLED, ERROR_CANCELLED, ERROR_INVALID_FLAGS,
-    ERROR_INVALID_PARAMETER, ERROR_LOGON_FAILURE, ERROR_NO_SUCH_LOGON_SESSION,
+    ERROR_INVALID_PARAMETER, ERROR_LOGON_FAILURE, ERROR_NOT_FOUND, ERROR_NO_SUCH_LOGON_SESSION,
     ERROR_PASSWORD_EXPIRED, HWND, WIN32_ERROR,
 };
 use windows::Win32::Graphics::Gdi::HBITMAP;
 use windows::Win32::Security::Credentials::{
-    CredUIPromptForWindowsCredentialsW, CredUnPackAuthenticationBufferW, CREDUIWIN_CHECKBOX,
-    CREDUIWIN_FLAGS, CREDUIWIN_GENERIC, CREDUI_INFOW, CRED_PACK_GENERIC_CREDENTIALS,
+    CredDeleteW, CredFree, CredPackAuthenticationBufferW, CredReadW,
+    CredUIPromptForWindowsCredentialsW, CredUnPackAuthenticationBufferW, CredWriteW, CREDENTIALW,
+    CREDUIWIN_CHECKBOX, CREDUIWIN_FLAGS, CREDUIWIN_GENERIC, CREDUI_INFOW,
+    CRED_PACK_GENERIC_CREDENTIALS, CRED_PERSIST_LOCAL_MACHINE, CRED_TYPE_GENERIC,
 };
 
 use crate::error::Error;
@@ -198,4 +200,159 @@ pub fn prompt(options: &PromptOptions) -> Result<Credentials, Error> {
         password,
         save_requested,
     })
+}
+
+pub fn read_cred(target_name: &str) -> Result<Credentials, Error> {
+    let target_name = str_2_widenullstr(target_name);
+    let dtype = CRED_TYPE_GENERIC;
+    unsafe {
+        let mut cred_ptr = std::ptr::null_mut();
+        let credential = &mut cred_ptr;
+        let res = CredReadW(
+            PCWSTR(target_name.as_ptr()), // LPCWSTR
+            dtype,                        // DWORD
+            0,                            // flags: DWORD
+            credential,
+        );
+        if let Err(e) = res {
+            CredFree(cred_ptr as *mut c_void);
+            if e == ERROR_NOT_FOUND.into() {
+                return Error::notfound();
+            }
+            return Err(e.into());
+        }
+
+        let cred = *cred_ptr;
+
+        let blob_size = cred.CredentialBlobSize as usize;
+        let blob: Vec<u8> = Vec::from(std::slice::from_raw_parts(cred.CredentialBlob, blob_size));
+        let mut username = [0u16; 255];
+        let mut password = [0u16; 255];
+        let mut pcchlmaxusername = 255;
+        let mut pcchlmaxpassword = 255;
+        {
+            let dwflags = CRED_PACK_GENERIC_CREDENTIALS;
+
+            let pszusername = PWSTR(username.as_mut_ptr());
+            let pszpassword = PWSTR(password.as_mut_ptr());
+
+            CredUnPackAuthenticationBufferW(
+                dwflags,                        // CRED_PACK_FLAGS,
+                blob.as_ptr() as *const c_void, // *const c_void,
+                blob_size as u32,               // u32
+                pszusername,                    // PWSTR
+                &mut pcchlmaxusername,          // *mut u32
+                PWSTR::null(),                  // PWSTR,
+                None,                           // Option<*mut u32>
+                pszpassword,                    // PWSTR,
+                &mut pcchlmaxpassword,          // *mut u32
+            )?;
+        }
+
+        let pcchlmaxusername = pcchlmaxusername.saturating_sub(1) as usize;
+        let pcchlmaxpassword = pcchlmaxpassword.saturating_sub(1) as usize;
+        let username = username
+            .get(0..pcchlmaxusername)
+            .map(String::from_utf16_lossy)
+            .unwrap_or_default();
+        let password = password
+            .get(0..pcchlmaxpassword)
+            .map(String::from_utf16_lossy)
+            .unwrap_or_default();
+
+        CredFree(cred_ptr as *mut c_void);
+
+        Ok(Credentials {
+            username,
+            password,
+            save_requested: false,
+        })
+    }
+}
+
+pub fn write_cred(target_name: &str, comment: &str, creds: &Credentials) -> Result<(), Error> {
+    let mut tgt_name = str_2_widenullstr(target_name);
+    let mut comment = str_2_widenullstr(comment);
+
+    let username = HSTRING::from(&creds.username);
+    let mut usrname = str_2_widenullstr(&creds.username);
+    let password = HSTRING::from(&creds.password);
+
+    let mut packed_len = [255u32];
+    let mut packed_buf = [0u8; 255];
+
+    unsafe {
+        let pszusername = PCWSTR(username.as_ptr());
+        let pszpassword = PCWSTR(password.as_ptr());
+        let len = &mut packed_len as *mut u32;
+        let res = CredPackAuthenticationBufferW(
+            CRED_PACK_GENERIC_CREDENTIALS, // dwflags
+            pszusername,                   // LPWSTR
+            pszpassword,                   // LPWSTR
+            Some(packed_buf.as_mut_ptr()), // Option<*mut u8>
+            len,
+        );
+        res?;
+    }
+
+    let cred = CREDENTIALW {
+        Flags: Default::default(),
+        Type: CRED_TYPE_GENERIC,
+        TargetName: PWSTR(tgt_name.as_mut_ptr()),
+        Comment: PWSTR(comment.as_mut_ptr()),
+        LastWritten: Default::default(),
+        CredentialBlobSize: packed_len[0],
+        CredentialBlob: packed_buf.as_mut_ptr(),
+        Persist: CRED_PERSIST_LOCAL_MACHINE,
+        AttributeCount: 0,
+        Attributes: std::ptr::null_mut(),
+        TargetAlias: PWSTR::null(),
+        UserName: PWSTR(usrname.as_mut_ptr()),
+    };
+    unsafe {
+        CredWriteW(&cred as *const CREDENTIALW, 0)?;
+    }
+    Ok(())
+}
+
+pub fn read_or_prompt_and_save(
+    target: &str,
+    comment: &str,
+    options: &PromptOptions,
+) -> Result<Credentials, Error> {
+    let err = match read_cred(target) {
+        Ok(c) => {
+            return Ok(c);
+        }
+        Err(e) => e,
+    };
+    if !err.is_notfound() {
+        return Err(err);
+    }
+
+    let cred = prompt(options)?;
+
+    if cred.save_requested {
+        write_cred(target, comment, &cred)?;
+    }
+
+    Ok(cred)
+}
+
+pub fn delete_cred(target: &str) -> Result<(), Error> {
+    let target = str_2_widenullstr(target);
+    unsafe {
+        if let Err(e) = CredDeleteW(PCWSTR(target.as_ptr()), CRED_TYPE_GENERIC, 0) {
+            if e.code() != ERROR_NOT_FOUND.into() {
+                return Err(e.into());
+            }
+        }
+    }
+    Ok(())
+}
+
+fn str_2_widenullstr(val: &str) -> Vec<u16> {
+    let mut buf = HSTRING::from(val).as_wide().to_vec();
+    buf.push(0);
+    buf
 }
