@@ -1,10 +1,11 @@
-use irox_safe_windows::credentials::{
-    delete_cred, read_cred, read_or_prompt_and_save, PromptOptions,
-};
 use irox_safe_windows::error::Error;
 #[allow(clippy::print_stdout)]
 #[cfg(windows)]
 pub fn main() -> Result<(), Error> {
+    use irox_safe_windows::credentials::{
+        delete_cred, read_cred, read_or_prompt_and_save, PromptOptions,
+    };
+
     let target = "irox-safe-windows-test-cred";
     let options = PromptOptions::new()
         .with_title("Little Title Text!")

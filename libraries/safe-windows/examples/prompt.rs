@@ -1,9 +1,10 @@
-use irox_safe_windows::credentials::{prompt, Credentials, PromptOptions};
 use irox_safe_windows::error::Error;
 
 #[allow(clippy::print_stdout)]
 #[cfg(windows)]
 pub fn main() -> Result<(), Error> {
+    use irox_safe_windows::credentials::{prompt, Credentials, PromptOptions};
+
     let options = PromptOptions::new()
         .with_title("Little Title Text!")
         .with_subtitle("Big Title Text!");
