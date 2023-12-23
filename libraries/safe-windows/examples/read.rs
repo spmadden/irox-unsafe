@@ -1,7 +1,6 @@
-use irox_safe_windows::error::Error;
 #[allow(clippy::print_stdout)]
 #[cfg(windows)]
-pub fn main() -> Result<(), Error> {
+pub fn main() -> Result<(), irox_safe_windows::error::Error> {
     use irox_safe_windows::credentials::{
         delete_cred, read_cred, read_or_prompt_and_save, PromptOptions,
     };
@@ -24,6 +23,7 @@ pub fn main() -> Result<(), Error> {
 }
 
 #[cfg(not(windows))]
+#[allow(clippy::print_stderr)]
 pub fn main() {
     eprintln!("This example only supported on windows targets.");
 }
