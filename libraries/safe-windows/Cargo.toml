@@ -1,0 +1,19 @@
+[package]
+name = "irox-safe-windows"
+description = "Wrappers around the windows native unsafe functions to make them ergonomic"
+keywords = ["irox", "irox-safe"]
+categories = ["api-bindings", "os::windows-apis"]
+version= "0.1.0"
+edition.workspace = true
+authors.workspace = true
+homepage.workspace = true
+license.workspace = true
+exclude.workspace = true
+repository.workspace = true
+readme = "README.md"
+
+[lints]
+workspace = true
+
+[dependencies]
+windows = {workspace = true, features = ["Win32_Foundation", "Win32_Security_Credentials", "Win32_Graphics_Gdi"] }

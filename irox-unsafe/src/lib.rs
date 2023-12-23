@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
 // Copyright 2023 IROX Contributors
 
-#![forbid(unsafe_code)]
+#[cfg(feature = "safe-windows")]
+pub use irox_safe_windows;

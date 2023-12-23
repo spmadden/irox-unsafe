@@ -17,5 +17,7 @@ workspace = true
 
 [features]
 default = []
+safe-windows = ['dep:irox-safe-windows']
 
 [dependencies]
+irox-safe-windows = {version = "0.1.0", path = "../libraries/safe-windows", optional = true}
