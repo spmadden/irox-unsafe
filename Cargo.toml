@@ -12,6 +12,7 @@ repository = "https://github.com/spmadden/irox-unsafe"
 resolver = "2"
 members = [
     "irox-unsafe",
+    "libraries/safe-linux",
     "libraries/safe-windows",
 ]
 

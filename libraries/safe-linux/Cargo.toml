@@ -1,0 +1,18 @@
+[package]
+name = "irox-safe-linux"
+description = "Wrappers around the linux native API functions & SYSCALLs to make them ergonomic"
+keywords = ["irox", "irox-unsafe"]
+categories = ["api-bindings", "os::linux-apis"]
+version= "0.1.0"
+edition.workspace = true
+authors.workspace = true
+homepage.workspace = true
+license.workspace = true
+exclude.workspace = true
+repository.workspace = true
+readme = "README.md"
+
+[lints]
+workspace = true
+
+[dependencies]
