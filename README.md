@@ -20,6 +20,7 @@ Current Modules & Organization:
 * [`irox-unsafe`](https://github.com/spmadden/irox-unsafe/blob/master/irox-unsafe) - Aggregator module
 * [`libraries`](https://github.com/spmadden/irox-unsafe/blob/master/libraries) - Rust 'library' crates, usually without
   binaries
+    * [`safe-linux`] - Wrappers around the linux native API functions & SYSCALLs to make them ergonomic
     * [`safe-windows`] - Wrappers around the windows native unsafe functions to make them ergonomic
 
 Version Status
@@ -28,10 +29,17 @@ Version Status
 | Crate               | Status                                                                                          |
 |---------------------|-------------------------------------------------------------------------------------------------|
 | `irox-safe-windows` | [![safe-windows-vsn-shield]][safe-windows-crate] [![safe-windows-doc-shield]][safe-windows-doc] |
+| `irox-safe-linux`   | [![safe-linux-vsn-shield]][safe-linux-crate] [![safe-linux-doc-shield]][safe-linux-doc]         |
 
 [`safe-windows`]: https://github.com/spmadden/irox-unsafe/blob/master/libraries/safe-windows
 [safe-windows-vsn-shield]: https://img.shields.io/crates/v/irox-safe-windows.svg
 [safe-windows-doc-shield]: https://docs.rs/irox-safe-windows/badge.svg
 [safe-windows-crate]: https://crates.io/crates/irox-safe-windows
 [safe-windows-doc]: https://docs.rs/irox-safe-windows
+
+[`safe-linux`]: https://github.com/spmadden/irox-unsafe/blob/master/libraries/safe-linux
+[safe-linux-vsn-shield]: https://img.shields.io/crates/v/irox-safe-linux.svg
+[safe-linux-doc-shield]: https://docs.rs/irox-safe-linux/badge.svg
+[safe-linux-crate]: https://crates.io/crates/irox-safe-linux
+[safe-linux-doc]: https://docs.rs/irox-safe-linux
 

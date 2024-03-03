@@ -3,8 +3,30 @@
 version = 3
 
 [[package]]
+name = "irox-enums"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ac9e2ef0ec6807c038e3067d3644e8284fbe3f8626c0d6469edf3499af716b7a"
+dependencies = [
+ "irox-enums_derive",
+]
+
+[[package]]
+name = "irox-enums_derive"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ef7dca349c54c649534905a82175b2a582e67c791e3a2b6428e02e948ac5e337"
+dependencies = [
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "irox-safe-linux"
 version = "0.1.0"
+dependencies = [
+ "irox-enums",
+]
 
 [[package]]
 name = "irox-safe-windows"
@@ -17,8 +39,44 @@ dependencies = [
 name = "irox-unsafe"
 version = "0.1.0"
 dependencies = [
+ "irox-safe-linux",
  "irox-safe-windows",
 ]
+
+[[package]]
+name = "proc-macro2"
+version = "1.0.78"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e2422ad645d89c99f8f3e6b88a9fdeca7fabeac836b1002371c4367c8f984aae"
+dependencies = [
+ "unicode-ident",
+]
+
+[[package]]
+name = "quote"
+version = "1.0.35"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "291ec9ab5efd934aaf503a6466c5d5251535d108ee747472c3977cc5acc868ef"
+dependencies = [
+ "proc-macro2",
+]
+
+[[package]]
+name = "syn"
+version = "2.0.52"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b699d15b36d1f02c3e7c69f8ffef53de37aefae075d8488d4ba1a7788d574a07"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "unicode-ident",
+]
+
+[[package]]
+name = "unicode-ident"
+version = "1.0.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3354b9ac3fae1ff6755cb6db53683adb661634f67557942dea4facebec0fee4b"
 
 [[package]]
 name = "windows"
