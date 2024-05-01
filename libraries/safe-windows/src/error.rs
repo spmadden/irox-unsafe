@@ -56,6 +56,7 @@ impl_error!(std::ffi::FromBytesWithNulError, "FFI");
 impl_error!(std::ffi::FromBytesUntilNulError, "FFI");
 impl_error!(std::ffi::NulError, "FFI");
 impl_error!(std::io::Error, "IOError");
+impl_error!(irox_bits::Error, "BitsError");
 impl_error!(std::string::FromUtf16Error, "UTF16Error");
 
 #[cfg(windows)]
