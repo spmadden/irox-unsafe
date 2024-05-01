@@ -5,8 +5,8 @@
 //!
 //! Error Numbers (ERRNOs)
 
-use crate::time::EnumName;
 use core::fmt::{Debug, Formatter};
+use irox_enums::EnumName;
 
 #[derive(Copy, Clone, Eq, PartialEq, EnumName)]
 pub enum Errno {
