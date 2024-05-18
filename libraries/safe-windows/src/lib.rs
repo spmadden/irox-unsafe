@@ -10,6 +10,7 @@
 #[cfg(windows)]
 pub mod credentials;
 pub mod error;
+#[cfg(windows)]
 pub mod fs;
 #[cfg(windows)]
 pub mod smbios;
