@@ -3,6 +3,7 @@ use std::fmt::{Display, Formatter};
 #[derive(Debug, Default, Copy, Clone, Eq, PartialEq)]
 pub enum ErrorType {
     NotFound,
+    NoConsole,
     #[default]
     Other,
 }
@@ -26,6 +27,12 @@ impl Error {
         Err(Error {
             msg: format!("Error({code}): {message}"),
             err_type: ErrorType::Other,
+        })
+    }
+    pub fn no_console<T>() -> Result<T, Error> {
+        Err(Error {
+            msg: "Console not allocated".to_string(),
+            err_type: ErrorType::NoConsole,
         })
     }
     pub fn notfound<T>() -> Result<T, Error> {
