@@ -12,12 +12,15 @@ repository = "https://github.com/spmadden/irox-unsafe"
 resolver = "2"
 members = [
     "irox-unsafe",
+    "libraries/arch-x86_64",
     "libraries/safe-linux",
     "libraries/safe-windows",
 ]
 
 [workspace.dependencies]
 windows = {version = "0.56.0", default-features = false, features = []}
+criterion = "0.5"
+core_affinity = "0.8.1"
 
 # Lints last updated for Rust 1.74.0
 [workspace.lints.rust]
