@@ -21,27 +21,29 @@ async = ["dep:futures-lite"]
 
 [dependencies]
 futures-lite = {version = "2.3", optional = true, features = ["futures-io"]}
-irox-bits = {version = "0", features = ["std"]}
+irox-structs = "0"
 
-[target.'cfg(windows)'.dependencies]
-irox-structs = "0.5"
-irox-tools = { version = "0", features = ["std"] }
-irox-log = "0"
+[dependencies.irox]
+version = "0"
+features = ["structs", "bits", "tools", "log", "enums", "std"]
 
 [target.'cfg(windows)'.dependencies.windows]
 workspace = true
 features = [
-    "Win32_Foundation", 
-    "Win32_Graphics_Gdi", 
-    "Win32_Security", 
+    "Win32_Foundation",
     "Win32_Security_Credentials",
-    "Win32_Storage_FileSystem", 
-    "Win32_System_SystemInformation", 
+    "Win32_Graphics_Gdi",
+    "Win32_System_SystemInformation",
     "Win32_System_Console",
-    "Win32_System_IO", 
+    "Win32_System_IO",
+    "Win32_Storage_FileSystem",
+    "Win32_Security",
     "Win32_System_Threading",
+    "Win32_Networking_WinSock",
+    "Win32_NetworkManagement_IpHelper",
+    "Win32_NetworkManagement_Ndis",
 ]
 
 [dev-dependencies]
 tokio = {version = "1.37", features = ["full"]}
-irox-threading = "0.2.4"
+irox = {version = "0", features = ["threading"]}

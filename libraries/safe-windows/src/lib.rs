@@ -6,6 +6,7 @@
 //!
 
 #![allow(non_snake_case)]
+extern crate core;
 
 #[cfg(windows)]
 pub mod credentials;
@@ -16,3 +17,6 @@ pub mod fs;
 pub mod smbios;
 #[cfg(windows)]
 pub mod term;
+#[cfg(windows)]
+pub mod net;
+pub mod net_if;

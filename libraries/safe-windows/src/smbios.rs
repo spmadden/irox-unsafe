@@ -2,11 +2,15 @@
 // Copyright 2023 IROX Contributors
 //
 
+#[cfg(feature = "irox/bits")]
+use irox::bits as irox_bits;
+
 use crate::error::Error;
-use irox_bits::{Bits, MutBits};
-use irox_structs::Struct;
-use irox_tools::uuid::UUID;
+use irox::irox_bits::{Bits, MutBits};
+use irox::tools::uuid::UUID;
 use std::io::Write;
+use irox::irox_log::log::info;
+use irox::structs::Struct;
 use windows::Win32::System::SystemInformation::{GetSystemFirmwareTable, RSMB};
 
 pub fn read_raw_smbios_tables() -> Vec<u8> {
@@ -96,7 +100,7 @@ impl BIOSInformation {
         let bios_characteristics = val.read_le_u32()?;
 
         let ext_bits = len.saturating_sub(18) as usize;
-        irox_log::log::info!("ext bits: {ext_bits}");
+        info!("ext bits: {ext_bits}");
         val.advance(ext_bits)?;
 
         let bios_major_release = val.read_u8()?;

@@ -1,9 +1,39 @@
 use std::fmt::{Display, Formatter};
+use windows::Win32::Foundation::WIN32_ERROR;
+use windows::Win32::Networking::WinSock::WSA_ERROR;
+
+pub const WSA_INVALID_HANDLE: i32 = 6;
+pub const WSA_INVALID_PARAMETER: i32 = 87;
+pub const WSA_E_OPERATION_ABORTED: i32 = 995;
+pub const WSA_IO_INCOMPLETE: i32 = 996;
+pub const WSA_E_INTR: i32 = 10004;
+pub const WSA_E_FAULT: i32 = 10014;
+pub const WSA_E_INVAL: i32 = 10022;
+pub const WSA_E_WOULDBLOCK: i32 = 10035;
+pub const WSA_E_INPROGRESS: i32 = 10036;
+pub const WSA_E_NOTSOCK: i32 = 10038;
+pub const WSA_E_MSGSIZE: i32 = 10040;
+pub const WSA_E_OPNOTSUPP: i32 = 10045;
+pub const WSA_E_NETDOWN: i32 = 10050;
+pub const WSA_E_NETRESET: i32 = 10052;
+pub const WSA_E_CONNABORTED: i32 = 10053;
+pub const WSA_E_CONNRESET: i32 = 10054;
+pub const WSA_E_NOBUFS: i32 = 10055;
+pub const WSA_E_NOTCONN: i32 = 10057;
+pub const WSA_E_SHUTDOWN: i32 = 10058;
+pub const WSA_NOT_INITIALIZED: i32 = 10093;
+#[derive(Debug, Copy, Clone)]
+pub enum WinsockErr {
+    InvalidHandle,
+    InvalidParameter,
+}
 
 #[derive(Debug, Default, Copy, Clone, Eq, PartialEq)]
 pub enum ErrorType {
     NotFound,
     NoConsole,
+    Network,
+    IOIncomplete,
     #[default]
     Other,
 }
@@ -41,8 +71,18 @@ impl Error {
             err_type: ErrorType::NotFound,
         })
     }
+    pub fn msg(&self) -> &str {
+        &self.msg
+    }
+    pub fn err_type(&self) -> ErrorType {
+        self.err_type
+    }
     pub fn is_notfound(&self) -> bool {
         self.err_type == ErrorType::NotFound
+    }
+
+    pub fn is_ioincomplete(&self) -> bool {
+        self.err_type == ErrorType::IOIncomplete
     }
 }
 
@@ -63,8 +103,56 @@ impl_error!(std::ffi::FromBytesWithNulError, "FFI");
 impl_error!(std::ffi::FromBytesUntilNulError, "FFI");
 impl_error!(std::ffi::NulError, "FFI");
 impl_error!(std::io::Error, "IOError");
-impl_error!(irox_bits::Error, "BitsError");
+impl_error!(irox::bits::Error, "BitsError");
 impl_error!(std::string::FromUtf16Error, "UTF16Error");
 
 #[cfg(windows)]
 impl_error!(windows::core::Error, "WindowsErr");
+
+impl From<WIN32_ERROR> for Error {
+    fn from(value: WIN32_ERROR) -> Self {
+        Error {
+            msg: format!("Win32 Error: {value:?}"),
+            err_type: ErrorType::Other
+        }
+    }
+}
+
+impl From<WSA_ERROR> for Error {
+    fn from(value: WSA_ERROR) -> Self {
+        match value.0 {
+            WSA_NOT_INITIALIZED => Error {
+                err_type: ErrorType::Network,
+                msg: "WSANOTINITIALIZED: A successful WSAStartup call must occur before using this function".to_string()
+            },
+            WSA_E_NETDOWN => Error {
+                err_type: ErrorType::Network,
+                msg: "WSAENETDOWN: The network subsystem has failed".to_string()
+            },
+            WSA_E_NOTSOCK => Error {
+                err_type: ErrorType::Network,
+                msg: "WSAENOTSOCK: The descriptor is not a socket".to_string()
+            },
+            WSA_INVALID_HANDLE => Error {
+                err_type: ErrorType::Network,
+                msg: "WSA_INVALID_HANDLE: The hEvent parameter of the overlapped structure does not contain a valid object handle".to_string()
+            },
+            WSA_INVALID_PARAMETER => Error {
+                err_type: ErrorType::Network,
+                msg: "WSA_INVALID_PARAMETER: One of the parameters is unacceptable".to_string()
+            },
+            WSA_IO_INCOMPLETE => Error {
+                err_type: ErrorType::IOIncomplete,
+                msg: "WSA_IO_INCOMPLETE: the fWait parameter is false and the operation has not completed".to_string()
+            },
+            WSA_E_FAULT => Error {
+                err_type: ErrorType::Network,
+                msg: "WSAEFAULT: one or more of the pointers are not valid".to_string()
+            },
+            e => Error {
+                err_type: ErrorType::Other,
+                msg: format!("Unknown WSA Error code: {e}")
+            }
+        }
+    }
+}
