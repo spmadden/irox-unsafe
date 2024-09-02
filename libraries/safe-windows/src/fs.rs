@@ -5,8 +5,9 @@
 #![allow(non_camel_case_types)]
 
 use crate::error::Error;
-use std::ffi::c_void;
+use std::ffi::{c_void, CString};
 use std::future::Future;
+use std::num::NonZeroU8;
 use std::os::windows::raw::HANDLE;
 use std::path::Path;
 use std::pin::Pin;
@@ -86,8 +87,8 @@ pub struct AsyncFile {
 
 impl AsyncFile {
     pub fn open<T: AsRef<Path>>(path: T) -> Result<AsyncFile, Error> {
-        let path = format!("{}", path.as_ref().to_string_lossy());
-        let path = path.as_ptr() as *const i8;
+        let path = path.as_ref().to_string_lossy().bytes().filter_map(NonZeroU8::new).collect::<Vec<_>>();
+        let path = CString::from(path);
         let security = std::ptr::null_mut();
         let creation_disposition = OPEN_ALWAYS.0;
         let share_mode = FILE_SHARE_READ.0 | FILE_SHARE_WRITE.0;
@@ -100,7 +101,7 @@ impl AsyncFile {
         let desired_access = GENERIC_READ.0 | GENERIC_WRITE.0;
         let handle = unsafe {
             CreateFileA(
-                path,
+                path.as_ptr(),
                 desired_access,
                 share_mode,
                 security,

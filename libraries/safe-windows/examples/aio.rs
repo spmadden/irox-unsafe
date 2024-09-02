@@ -10,8 +10,9 @@ use std::collections::VecDeque;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 
-// const PAGE_SIZE : usize = 1024000;
-const PAGE_SIZE: usize = 512_000;
+const PAGE_SIZE : usize = 2_048_000;
+// const PAGE_SIZE : usize = 1_024_000;
+// const PAGE_SIZE: usize = 512_000;
 // const PAGE_SIZE : usize = 262_144;
 // const PAGE_SIZE : usize = 256_000;
 // const PAGE_SIZE : usize = 128_000;
@@ -33,11 +34,11 @@ pub fn main() {
     //     .custom_flags(FILE_FLAG_WRITE_THROUGH | FILE_FLAG_NO_BUFFERING | FILE_FLAG_OVERLAPPED)
     //     .create(true)
     //     .read(true).open("E:/test_page.pagefile").unwrap();
-    let file = AsyncFile::open("D:/test_page.pagefile").unwrap();
+    let file = AsyncFile::open("./test_page.pagefile").unwrap();
     // let mut file = Pagefile::open("test_page.pagefile")?;
     let start = std::time::Instant::now();
     let mut handles = VecDeque::with_capacity(1000);
-    let total_size = 8_000_000_000u64;
+    let total_size = 8_192_000_000u64;
     let total_pages = total_size / PAGE_SIZE as u64;
     let num_threads = 2;
     let queue = Arc::new(AtomicU64::new(0));
@@ -50,7 +51,7 @@ pub fn main() {
             loop {
                 let page = vec![0u8; PAGE_SIZE].into_boxed_slice();
                 let page_index = queue.fetch_add(1, Ordering::Relaxed);
-                if page_index >= total_pages {
+                if page_index > total_pages {
                     break;
                 };
 
