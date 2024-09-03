@@ -1,9 +1,12 @@
+use crate::error::Error;
 use core::slice;
 use std::ffi::c_void;
-use windows::Win32::Networking::WinSock::{AF_UNSPEC};
-use windows::Win32::NetworkManagement::IpHelper::{FreeMibTable, GetInterfaceActiveTimestampCapabilities, GetIpInterfaceTable, INTERFACE_TIMESTAMP_CAPABILITIES, MIB_IPINTERFACE_ROW, MIB_IPINTERFACE_TABLE};
+use windows::Win32::NetworkManagement::IpHelper::{
+    FreeMibTable, GetInterfaceActiveTimestampCapabilities, GetIpInterfaceTable,
+    INTERFACE_TIMESTAMP_CAPABILITIES, MIB_IPINTERFACE_ROW, MIB_IPINTERFACE_TABLE,
+};
 use windows::Win32::NetworkManagement::Ndis::NET_LUID_LH;
-use crate::error::Error;
+use windows::Win32::Networking::WinSock::AF_UNSPEC;
 
 #[derive(Debug)]
 pub struct IfInfo {
@@ -43,7 +46,7 @@ impl From<&MIB_IPINTERFACE_ROW> for IfInfo {
 }
 pub struct Interface {
     pub luid: NET_LUID_LH,
-    pub if_info: IfInfo
+    pub if_info: IfInfo,
 }
 
 impl Interface {
@@ -54,16 +57,17 @@ impl Interface {
         unsafe {
             let res = GetIpInterfaceTable(AF_UNSPEC, std::ptr::from_mut(&mut tb));
             if res.is_err() {
-                return Err(res.into())
+                return Err(res.into());
             }
-            let entries = slice::from_raw_parts(std::ptr::from_ref(&(*tb).Table), (*tb).NumEntries as usize);
+            let entries =
+                slice::from_raw_parts(std::ptr::from_ref(&(*tb).Table), (*tb).NumEntries as usize);
             for entry in entries {
                 let luid = entry[0].InterfaceLuid;
                 let entry: IfInfo = (&entry[0]).into();
                 println!("{entry:#?}");
                 out.push(Interface {
                     if_info: entry,
-                    luid
+                    luid,
                 })
             }
             println!("Num Entries: {}", entries.len());
@@ -73,14 +77,12 @@ impl Interface {
         }
         Ok(out)
     }
-    
+
     pub fn get_interface_timestamp_capabilities(&self) {
         let mut caps = INTERFACE_TIMESTAMP_CAPABILITIES::default();
         unsafe {
             let iface = std::ptr::from_ref(&self.luid);
-            GetInterfaceActiveTimestampCapabilities(
-                iface, std::ptr::from_mut(&mut caps)
-            );
+            GetInterfaceActiveTimestampCapabilities(iface, std::ptr::from_mut(&mut caps));
         }
         println!("{caps:#?}");
     }

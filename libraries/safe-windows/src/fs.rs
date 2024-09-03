@@ -87,7 +87,12 @@ pub struct AsyncFile {
 
 impl AsyncFile {
     pub fn open<T: AsRef<Path>>(path: T) -> Result<AsyncFile, Error> {
-        let path = path.as_ref().to_string_lossy().bytes().filter_map(NonZeroU8::new).collect::<Vec<_>>();
+        let path = path
+            .as_ref()
+            .to_string_lossy()
+            .bytes()
+            .filter_map(NonZeroU8::new)
+            .collect::<Vec<_>>();
         let path = CString::from(path);
         let security = std::ptr::null_mut();
         let creation_disposition = OPEN_ALWAYS.0;

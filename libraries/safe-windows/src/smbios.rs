@@ -7,10 +7,10 @@ use irox::bits as irox_bits;
 
 use crate::error::Error;
 use irox::irox_bits::{Bits, MutBits};
-use irox::tools::uuid::UUID;
-use std::io::Write;
 use irox::irox_log::log::info;
 use irox::structs::Struct;
+use irox::tools::uuid::UUID;
+use std::io::Write;
 use windows::Win32::System::SystemInformation::{GetSystemFirmwareTable, RSMB};
 
 pub fn read_raw_smbios_tables() -> Vec<u8> {

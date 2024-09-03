@@ -10,7 +10,7 @@ use std::collections::VecDeque;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 
-const PAGE_SIZE : usize = 2_048_000;
+const PAGE_SIZE: usize = 2_048_000;
 // const PAGE_SIZE : usize = 1_024_000;
 // const PAGE_SIZE: usize = 512_000;
 // const PAGE_SIZE : usize = 262_144;

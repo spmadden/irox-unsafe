@@ -14,9 +14,11 @@ pub mod error;
 #[cfg(windows)]
 pub mod fs;
 #[cfg(windows)]
-pub mod smbios;
-#[cfg(windows)]
-pub mod term;
-#[cfg(windows)]
 pub mod net;
 pub mod net_if;
+#[cfg(windows)]
+pub mod smbios;
+#[cfg(windows)]
+pub mod system;
+#[cfg(windows)]
+pub mod term;

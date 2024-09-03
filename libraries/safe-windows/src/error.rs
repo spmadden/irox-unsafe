@@ -113,7 +113,7 @@ impl From<WIN32_ERROR> for Error {
     fn from(value: WIN32_ERROR) -> Self {
         Error {
             msg: format!("Win32 Error: {value:?}"),
-            err_type: ErrorType::Other
+            err_type: ErrorType::Other,
         }
     }
 }

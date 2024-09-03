@@ -10,7 +10,6 @@ use windows::Win32::System::IO::OVERLAPPED;
 
 use crate::error::Error;
 
-
 pub struct AsyncSocket {
     pub socket: TcpStream,
     pub raw_sock: RawSocket,
@@ -25,9 +24,7 @@ impl AsyncSocket {
     }
 
     pub fn write<'a>(&self, buf: &'a mut [u8]) -> Result<NetFuture<'a>, Error> {
-        let hEvent = unsafe {
-            WSACreateEvent()?
-        };
+        let hEvent = unsafe { WSACreateEvent()? };
         let mut buf = Pin::new(buf);
         let mut overlapped = Box::pin(OVERLAPPED {
             Internal: 0,
@@ -55,7 +52,7 @@ impl AsyncSocket {
             )
         };
         if res != 0 {
-            return Err(WSA_ERROR(res).into())
+            return Err(WSA_ERROR(res).into());
         }
         Ok(NetFuture {
             _buffer: buf,
@@ -103,9 +100,7 @@ impl<'a> Future for NetFuture<'a> {
             }
             Err(_e) => {
                 // maybe not done, maybe done with error.
-                let err: Error = unsafe {
-                    WSAGetLastError()
-                }.into();
+                let err: Error = unsafe { WSAGetLastError() }.into();
                 if err.is_ioincomplete() {
                     ctx.waker().wake_by_ref();
                     return Poll::Pending;
@@ -125,4 +120,3 @@ impl<'a> Drop for NetFuture<'a> {
         }
     }
 }
-
