@@ -285,6 +285,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d231dfb89cfffdbc30e7fc41579ed6066ad03abda9e567ccafae602b97ec5024"
 
 [[package]]
+name = "irox"
+version = "0.6.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "76f2fdc57953bb8eb41ac28b2e913e4337f8139fe1c27e3ab54c2b5016420dbc"
+dependencies = [
+ "irox-bits",
+ "irox-enums",
+ "irox-log",
+ "irox-structs",
+ "irox-threading",
+ "irox-time",
+ "irox-tools",
+ "irox-units",
+]
+
+[[package]]
 name = "irox-arch-x86-64"
 version = "0.1.0"
 dependencies = [
@@ -340,11 +356,8 @@ name = "irox-safe-windows"
 version = "0.1.2"
 dependencies = [
  "futures-lite",
- "irox-bits",
- "irox-log",
+ "irox",
  "irox-structs",
- "irox-threading",
- "irox-tools",
  "tokio",
  "windows",
 ]
