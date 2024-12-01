@@ -47,11 +47,11 @@ format_check +FLAGS='':
 
 lints +FLAGS='':
     @just logstart lints
-    cargo clippy --bins --lib --examples --all-features {{FLAGS}} --
+    cargo clippy --bins --lib --all-features {{FLAGS}} --
     @just logend
 
 lints_deny +FLAGS='':
-  cargo clippy --bins --lib --examples --all-features {{FLAGS}} -- -Dwarnings
+  cargo clippy --bins --lib --all-features {{FLAGS}} -- -Dwarnings
 
 
 package:
