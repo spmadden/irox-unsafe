@@ -58,7 +58,7 @@ pub fn get_system_time_utc() -> UTCDateTime {
         sys_time.wMinute as u8,
         sys_time.wSecond as u8,
     )
-    .unwrap()
+    .unwrap_or_default()
     .add(Duration::from_millis(sys_time.wMilliseconds as u64))
 }
 

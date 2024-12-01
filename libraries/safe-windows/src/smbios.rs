@@ -2,9 +2,6 @@
 // Copyright 2023 IROX Contributors
 //
 
-#[cfg(feature = "irox/bits")]
-use irox::bits as irox_bits;
-
 use crate::error::Error;
 use irox::irox_bits::{Bits, MutBits};
 use irox::irox_log::log::info;

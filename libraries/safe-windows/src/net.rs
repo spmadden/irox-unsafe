@@ -74,7 +74,7 @@ pub struct NetFuture<'a> {
     done: Option<u32>,
 }
 
-impl<'a> Future for NetFuture<'a> {
+impl Future for NetFuture<'_> {
     type Output = Result<u32, Error>;
 
     fn poll(mut self: Pin<&mut Self>, ctx: &mut Context<'_>) -> Poll<Self::Output> {
@@ -111,7 +111,7 @@ impl<'a> Future for NetFuture<'a> {
         }
     }
 }
-impl<'a> Drop for NetFuture<'a> {
+impl Drop for NetFuture<'_> {
     fn drop(&mut self) {
         unsafe {
             if let Err(_e) = WSACloseEvent(self.overlapped.hEvent) {

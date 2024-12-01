@@ -64,13 +64,11 @@ impl Interface {
             for entry in entries {
                 let luid = entry[0].InterfaceLuid;
                 let entry: IfInfo = (&entry[0]).into();
-                println!("{entry:#?}");
                 out.push(Interface {
                     if_info: entry,
                     luid,
                 })
             }
-            println!("Num Entries: {}", entries.len());
         }
         unsafe {
             FreeMibTable(tb as *const c_void);
@@ -84,7 +82,6 @@ impl Interface {
             let iface = std::ptr::from_ref(&self.luid);
             GetInterfaceActiveTimestampCapabilities(iface, std::ptr::from_mut(&mut caps));
         }
-        println!("{caps:#?}");
     }
 }
 
