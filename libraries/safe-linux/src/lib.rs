@@ -12,6 +12,8 @@
 
 extern crate alloc;
 
+#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+pub mod aio;
 pub mod errno;
 #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
 pub mod sys;
@@ -19,5 +21,3 @@ pub mod sys;
 pub mod syscall;
 #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
 pub mod time;
-#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
-pub mod aio;
