@@ -6,7 +6,7 @@ use crate::errno::Errno;
 use crate::{syscall_1, syscall_2};
 use alloc::boxed::Box;
 use core::pin::Pin;
-
+#[allow(dead_code)]
 const SYSCALL_IO_SETUP: u32 = 209u32;
 const SYSCALL_IO_DESTROY: u32 = 207u32;
 
@@ -22,7 +22,9 @@ const IOCB_CMD_PWRITEV: u16 = 8u16;
 pub struct AioContext(u32);
 impl Drop for AioContext {
     fn drop(&mut self) {
-        unsafe { io_destroy(self.0).unwrap() }
+        unsafe {
+            let _ = io_destroy(self.0);
+        }
     }
 }
 impl AioContext {
