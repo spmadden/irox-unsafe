@@ -5,6 +5,7 @@
 #![allow(clippy::print_stdout)]
 #![allow(clippy::unwrap_used)]
 
+#[cfg(windows)]
 use irox_safe_windows::fs::{AsyncFile, AsyncFileExt};
 use std::collections::VecDeque;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -26,6 +27,7 @@ pub const FILE_FLAG_RANDOM_ACCESS: u32 = 0x10000000;
 pub const FILE_FLAG_WRITE_THROUGH: u32 = 0x80000000;
 pub const FILE_FLAG_OVERLAPPED: u32 = 0x40000000;
 
+#[cfg(windows)]
 pub fn main() {
     // let mut rt = tokio::
     let mut rt = irox::threading::CurrentThreadExecutor::new();
@@ -79,4 +81,10 @@ pub fn main() {
         dur,
         len as f64 / dur / 1e6
     );
+}
+
+#[cfg(not(windows))]
+#[allow(clippy::print_stderr)]
+pub fn main() {
+    eprintln!("This example only supported on windows targets.");
 }

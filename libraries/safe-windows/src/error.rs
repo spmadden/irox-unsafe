@@ -1,4 +1,3 @@
-use std::ffi::CStr;
 use std::fmt::{Display, Formatter};
 #[cfg(windows)]
 use windows::Win32::Foundation::WIN32_ERROR;
@@ -106,7 +105,7 @@ impl Error {
         let msg = unsafe {
             let res = FormatMessageA(flags, source, messageid, languageid, buffer, 1024, args);
             if res > 0 {
-                CStr::from_bytes_until_nul(&buf)
+                std::ffi::CStr::from_bytes_until_nul(&buf)
                     .unwrap_or_default()
                     .to_string_lossy()
             } else {
