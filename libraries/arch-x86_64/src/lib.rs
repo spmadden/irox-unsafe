@@ -2,8 +2,8 @@
 // Copyright 2023 IROX Contributors
 
 //!
-//!
+//! Intel x86-64 Architecture-specific bits & bobs
 //!
 
-#[cfg(all(target_arch = "x86_64"))]
+#[cfg(target_arch = "x86_64")]
 pub mod rand;
