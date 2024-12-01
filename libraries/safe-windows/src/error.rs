@@ -1,6 +1,9 @@
+use std::ffi::CStr;
 use std::fmt::{Display, Formatter};
+use windows::core::PSTR;
 use windows::Win32::Foundation::WIN32_ERROR;
 use windows::Win32::Networking::WinSock::WSA_ERROR;
+use windows::Win32::System::Diagnostics::Debug::{FormatMessageA, FORMAT_MESSAGE_FROM_SYSTEM};
 
 pub const WSA_INVALID_HANDLE: i32 = 6;
 pub const WSA_INVALID_PARAMETER: i32 = 87;
@@ -83,6 +86,29 @@ impl Error {
 
     pub fn is_ioincomplete(&self) -> bool {
         self.err_type == ErrorType::IOIncomplete
+    }
+
+    pub fn win32<T>(err: WIN32_ERROR) -> Result<T, Error> {
+        let flags = FORMAT_MESSAGE_FROM_SYSTEM;
+        let source = None;
+        let messageid = err.0;
+        let languageid = 1; // sublang_default
+
+        let mut buf = [0u8; 1024];
+        let buffer = PSTR(buf.as_mut_ptr());
+
+        let args = None;
+        let msg = unsafe {
+            let res = FormatMessageA(flags, source, messageid, languageid, buffer, 1024, args);
+            if res > 0 {
+                CStr::from_bytes_until_nul(&buf)
+                    .unwrap_or_default()
+                    .to_string_lossy()
+            } else {
+                Default::default()
+            }
+        };
+        Error::code(err.0, msg.trim())
     }
 }
 

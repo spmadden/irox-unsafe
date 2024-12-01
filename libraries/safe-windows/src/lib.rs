@@ -17,6 +17,8 @@ pub mod fs;
 pub mod net;
 pub mod net_if;
 #[cfg(windows)]
+pub mod registry;
+#[cfg(windows)]
 pub mod smbios;
 #[cfg(windows)]
 pub mod system;
