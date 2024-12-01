@@ -1,9 +1,9 @@
 use std::ffi::CStr;
 use std::fmt::{Display, Formatter};
-use windows::core::PSTR;
+#[cfg(windows)]
 use windows::Win32::Foundation::WIN32_ERROR;
+#[cfg(windows)]
 use windows::Win32::Networking::WinSock::WSA_ERROR;
-use windows::Win32::System::Diagnostics::Debug::{FormatMessageA, FORMAT_MESSAGE_FROM_SYSTEM};
 
 pub const WSA_INVALID_HANDLE: i32 = 6;
 pub const WSA_INVALID_PARAMETER: i32 = 87;
@@ -88,7 +88,12 @@ impl Error {
         self.err_type == ErrorType::IOIncomplete
     }
 
+    #[cfg(windows)]
     pub fn win32<T>(err: WIN32_ERROR) -> Result<T, Error> {
+        use windows::core::PSTR;
+        use windows::Win32::System::Diagnostics::Debug::{
+            FormatMessageA, FORMAT_MESSAGE_FROM_SYSTEM,
+        };
         let flags = FORMAT_MESSAGE_FROM_SYSTEM;
         let source = None;
         let messageid = err.0;
@@ -135,6 +140,7 @@ impl_error!(std::string::FromUtf16Error, "UTF16Error");
 #[cfg(windows)]
 impl_error!(windows::core::Error, "WindowsErr");
 
+#[cfg(windows)]
 impl From<WIN32_ERROR> for Error {
     fn from(value: WIN32_ERROR) -> Self {
         Error {
@@ -144,6 +150,7 @@ impl From<WIN32_ERROR> for Error {
     }
 }
 
+#[cfg(windows)]
 impl From<WSA_ERROR> for Error {
     fn from(value: WSA_ERROR) -> Self {
         match value.0 {
