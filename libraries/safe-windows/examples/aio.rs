@@ -28,7 +28,7 @@ pub const FILE_FLAG_OVERLAPPED: u32 = 0x40000000;
 
 pub fn main() {
     // let mut rt = tokio::
-    let mut rt = irox_threading::CurrentThreadExecutor::new();
+    let mut rt = irox::threading::CurrentThreadExecutor::new();
     // let file = File::options()
     //     .write(true)
     //     .custom_flags(FILE_FLAG_WRITE_THROUGH | FILE_FLAG_NO_BUFFERING | FILE_FLAG_OVERLAPPED)

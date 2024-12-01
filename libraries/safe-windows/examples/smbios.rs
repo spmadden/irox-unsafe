@@ -4,9 +4,9 @@
 
 #![allow(clippy::print_stdout)]
 
+use irox::tools::hex::HexDump;
 use irox_safe_windows::error::Error;
 use irox_structs::Struct;
-use irox_tools::hex::HexDump;
 
 use irox_safe_windows::smbios::{read_next_table, read_raw_smbios_tables, SMBIOSHeader};
 
