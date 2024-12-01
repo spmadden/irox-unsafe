@@ -15,6 +15,7 @@ pub mod error;
 pub mod fs;
 #[cfg(windows)]
 pub mod net;
+#[cfg(windows)]
 pub mod net_if;
 #[cfg(windows)]
 pub mod registry;
