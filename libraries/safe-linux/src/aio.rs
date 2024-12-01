@@ -2,11 +2,12 @@
 // Copyright 2024 IROX Contributors
 //
 
+#![allow(dead_code)]
+
 use crate::errno::Errno;
 use crate::{syscall_1, syscall_2};
 use alloc::boxed::Box;
 use core::pin::Pin;
-#[allow(dead_code)]
 const SYSCALL_IO_SETUP: u32 = 209u32;
 const SYSCALL_IO_DESTROY: u32 = 207u32;
 
