@@ -19,7 +19,6 @@ workspace = true
 
 [dev-dependencies]
 criterion.workspace = true
-core_affinity.workspace = true
 
 [lib]
 bench = false
