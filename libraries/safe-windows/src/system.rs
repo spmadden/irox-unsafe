@@ -1,13 +1,16 @@
 use crate::error::Error;
+use core::ops::Add;
 use irox::time::datetime::UTCDateTime;
+use irox::time::epoch::WindowsNTTimestamp;
 use irox::time::Duration;
 use irox::units::units::datasize::{DataSize, DataSizeUnits};
-use std::ops::Add;
+use windows::Win32::Foundation::FILETIME;
 use windows::Win32::System::Memory::GetLargePageMinimum;
 use windows::Win32::System::ProcessStatus::{GetPerformanceInfo, PERFORMANCE_INFORMATION};
 use windows::Win32::System::SystemInformation::{
     GetSystemInfo, GetSystemTime, GetTickCount64, GlobalMemoryStatusEx, MEMORYSTATUSEX, SYSTEM_INFO,
 };
+use windows::Win32::System::Threading::{GetCurrentProcess, GetProcessTimes};
 
 #[derive(Debug, Default, Copy, Clone)]
 pub struct SystemInformation {
@@ -185,10 +188,58 @@ pub fn get_large_page_minimum_bytes() -> Result<usize, Error> {
     Ok(size)
 }
 
+#[derive(Debug, Copy, Clone)]
+pub struct ProcessTimes {
+    pub creation_time: WindowsNTTimestamp,
+    pub exit_time: WindowsNTTimestamp,
+    pub kernel_time: Duration,
+    pub user_time: Duration,
+}
+
+pub fn get_process_times() -> Result<ProcessTimes, Error> {
+    let mut creation_time = FILETIME::default();
+    let mut exit_time = FILETIME::default();
+    let mut kernel_time = FILETIME::default();
+    let mut user_time = FILETIME::default();
+    unsafe {
+        let hnd = GetCurrentProcess();
+        GetProcessTimes(
+            hnd,
+            &mut creation_time,
+            &mut exit_time,
+            &mut kernel_time,
+            &mut user_time,
+        )?;
+    }
+
+    Ok(ProcessTimes {
+        creation_time: creation_time.to_nt_timestamp(),
+        exit_time: exit_time.to_nt_timestamp(),
+        kernel_time: kernel_time.to_duration(),
+        user_time: user_time.to_duration(),
+    })
+}
+
+pub trait FTimeConversions {
+    fn to_nt_timestamp(&self) -> WindowsNTTimestamp;
+    fn to_duration(&self) -> Duration;
+}
+impl FTimeConversions for FILETIME {
+    fn to_nt_timestamp(&self) -> WindowsNTTimestamp {
+        let hns: u64 = (self.dwHighDateTime as u64) << 32 | self.dwLowDateTime as u64;
+        let sec: f64 = hns as f64 / 1e7;
+        WindowsNTTimestamp::from_seconds_f64(sec)
+    }
+
+    fn to_duration(&self) -> Duration {
+        self.to_nt_timestamp().get_offset()
+    }
+}
+
 #[cfg(test)]
 mod test {
     use crate::system::{
-        get_large_page_minimum_bytes, get_performance_info, get_system_info,
+        get_large_page_minimum_bytes, get_performance_info, get_process_times, get_system_info,
         get_system_memory_info, get_system_time_utc, get_system_uptime,
     };
     use irox::time::format::iso8601::ISO8601_DATE_TIME;
@@ -232,5 +283,10 @@ mod test {
         let lpm = get_large_page_minimum_bytes().unwrap();
         println!("{}", lpm);
         println!("{} k", lpm as f64 / 1024.);
+    }
+
+    #[test]
+    pub fn test_get_process_times() {
+        println!("{:#?}", get_process_times().unwrap());
     }
 }
