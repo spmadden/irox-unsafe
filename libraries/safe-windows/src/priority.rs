@@ -58,9 +58,8 @@ pub fn get_current_process_priority() -> PriorityClass {
         let clz = GetPriorityClass(proc);
         if clz == 0 {
             return PriorityClass::Other(0);
-        } else {
-            clz
         }
+        clz
     }
     .into()
 }
