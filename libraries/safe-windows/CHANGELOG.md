@@ -1,6 +1,45 @@
 
 
+## v0.1.4 (2025-03-01)
+
+### Chore
+
+ - <csr-id-35e2f1f21d8267055f596d6c66c1d888c098c8b8/> fixup lints & formatting
+
+### New Features
+
+ - <csr-id-1add5dfaacad055589506226565f5650d1b55445/> Add functionality to retrieve and debug thread stack limits
+   Introduced `CurrentThreadStackLimits` struct to represent thread stack bounds and corresponding methods to calculate size, usage, and free space. Added a function to fetch current thread stack limits using `GetCurrentThreadStackLimits` and implemented a debug interface for detailed inspection. Also included a basic test for printing stack limit information.
+ - <csr-id-9de52dc7d0494a26689e997f7377b965a0727587/> Add process times retrieval functionality
+   Introduced the `get_process_times` function to fetch process creation, exit, kernel, and user times. Added the `ProcessTimes` struct and `FTimeConversions` trait to handle conversions from `FILETIME` to relevant formats. Included a test for validating the new `get_process_times` functionality.
+ - <csr-id-232ba2cb568cfa241f87410e7e68422b94298db1/> Add process priority management to safe-windows library
+   Introduced functionality to get and set the priority class of the current process on Windows using `GetPriorityClass` and `SetPriorityClass`. This includes a `PriorityClass` enum for standard priority levels and conversion implementations for convenience.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 4 commits contributed to the release.
+ - 89 days passed between releases.
+ - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Add functionality to retrieve and debug thread stack limits ([`1add5df`](https://github.com/spmadden/irox-unsafe/commit/1add5dfaacad055589506226565f5650d1b55445))
+    - Fixup lints & formatting ([`35e2f1f`](https://github.com/spmadden/irox-unsafe/commit/35e2f1f21d8267055f596d6c66c1d888c098c8b8))
+    - Add process times retrieval functionality ([`9de52dc`](https://github.com/spmadden/irox-unsafe/commit/9de52dc7d0494a26689e997f7377b965a0727587))
+    - Add process priority management to safe-windows library ([`232ba2c`](https://github.com/spmadden/irox-unsafe/commit/232ba2cb568cfa241f87410e7e68422b94298db1))
+</details>
+
 ## v0.1.3 (2024-12-01)
+
+<csr-id-145392fb8d223b988ac9cec17765146dd733e2c3/>
 
 ### Chore
 
@@ -25,7 +64,7 @@
 
 <csr-read-only-do-not-edit/>
 
- - 10 commits contributed to the release.
+ - 11 commits contributed to the release.
  - 196 days passed between releases.
  - 10 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -37,6 +76,7 @@
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release irox-safe-windows v0.1.3 ([`00da48a`](https://github.com/spmadden/irox-unsafe/commit/00da48aefb23d606800ea966b159e40558e34af2))
     - Fixup linux build round 3 ([`e0056c5`](https://github.com/spmadden/irox-unsafe/commit/e0056c5f0286e62d91791465edc3e3072643e94a))
     - Fixup linux build again ([`7b009e9`](https://github.com/spmadden/irox-unsafe/commit/7b009e96c003e2e70a5917dc922b46985de99341))
     - Fixup linux build ([`41944ce`](https://github.com/spmadden/irox-unsafe/commit/41944ce7d108389a710b11b055560c758896babd))
