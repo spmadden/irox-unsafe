@@ -1,6 +1,9 @@
 use crate::error::Error;
+use std::arch::asm;
+use std::fmt::{Debug, Formatter};
 use windows::Win32::System::Threading::{
-    GetCurrentProcess, GetPriorityClass, SetPriorityClass, PROCESS_CREATION_FLAGS,
+    GetCurrentProcess, GetCurrentThreadStackLimits, GetPriorityClass, SetPriorityClass,
+    PROCESS_CREATION_FLAGS,
 };
 
 const REALTIME: u32 = 0x0100;
@@ -73,4 +76,62 @@ pub fn set_current_process_priority(priority: PriorityClass) -> Result<(), Error
         SetPriorityClass(proc, flags)?;
     }
     Ok(())
+}
+
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct CurrentThreadStackLimits {
+    pub low_limit: usize,
+    pub high_limit: usize,
+}
+impl CurrentThreadStackLimits {
+    pub fn get_size(&self) -> usize {
+        self.high_limit - self.low_limit
+    }
+    fn rsp() -> usize {
+        let mut out: usize;
+        unsafe {
+            asm!("mov {}, rsp", out(reg) out);
+        }
+        out
+    }
+    pub fn get_used(&self) -> usize {
+        self.high_limit - Self::rsp()
+    }
+    pub fn get_free(&self) -> usize {
+        Self::rsp() - self.low_limit
+    }
+}
+impl Debug for CurrentThreadStackLimits {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("CurrentThreadStackLimits")
+            .field(
+                "addrs",
+                &format!("{:#x}-{:#x}", self.low_limit, self.high_limit),
+            )
+            .field("size", &self.get_size())
+            .field("used", &self.get_used())
+            .field("free", &self.get_free())
+            .finish()
+    }
+}
+///
+/// Returns the current thread stack limits
+pub fn get_current_thread_stack_limits() -> CurrentThreadStackLimits {
+    let mut out = CurrentThreadStackLimits {
+        low_limit: 0,
+        high_limit: 0,
+    };
+    unsafe {
+        GetCurrentThreadStackLimits(&mut out.low_limit, &mut out.high_limit);
+    }
+    out
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    pub fn print_current_thread_stack_limits() {
+        let limits = super::get_current_thread_stack_limits();
+        println!("{limits:#?}");
+    }
 }
