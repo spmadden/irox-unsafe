@@ -51,12 +51,11 @@ pub fn rand128() -> Option<u128> {
 
 #[cfg(test)]
 mod test {
-    use crate::rand::{rand};
+    use crate::rand::rand;
 
     #[test]
     pub fn test() {
         let rnd = rand();
         assert_ne!(None, rnd);
     }
-
 }

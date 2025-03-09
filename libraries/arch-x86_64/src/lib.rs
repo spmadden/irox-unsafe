@@ -5,6 +5,6 @@
 //! Intel x86-64 Architecture-specific bits & bobs
 //!
 
+pub mod cpu;
 #[cfg(target_arch = "x86_64")]
 pub mod rand;
-pub mod cpu;
