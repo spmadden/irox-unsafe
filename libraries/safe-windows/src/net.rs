@@ -120,3 +120,150 @@ impl Drop for NetFuture<'_> {
         }
     }
 }
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub struct SocketOption {
+    pub level: u32,
+    pub optname: u32,
+}
+impl SocketOption {
+    const fn new(level: u32, optname: u32) -> Self {
+        Self { level, optname }
+    }
+}
+pub const SOL_SOCKET: u32 = 0xffff;
+pub const SO_REUSEADDR: u32 = 0x0004;
+pub const SO_KEEPALIVE: u32 = 0x0008;
+pub const SO_DONTROUTE: u32 = 0x0010;
+pub const SO_BROADCAST: u32 = 0x0020;
+pub const SO_USELOOPBACK: u32 = 0x0040;
+pub const SO_LINGER: u32 = 0x0080;
+
+pub const OPT_REUSEADDR: SocketOption = SocketOption::new(SOL_SOCKET, SO_REUSEADDR);
+
+pub const SO_SNDBUF: u32 = 0x1001;
+pub const SO_RCVBUF: u32 = 0x1002;
+pub const SO_RCVTIMEO: u32 = 0x1006;
+pub const SO_ERROR: u32 = 0x1007;
+pub const SO_TYPE: u32 = 0x1008;
+
+pub const IPP_IP: u32 = 0;
+pub const IPP_IPV6: u32 = 100;
+pub const IPP_UNSPEC: u32 = 0;
+pub const IPP_TCP: u32 = 6;
+pub const IPP_UDP: u32 = 17;
+
+pub const IP_TOS: SocketOption = SocketOption::new(IPP_IP, 3);
+pub const IP_TTL: SocketOption = SocketOption::new(IPP_IP, 4);
+pub const IP_MTU_DISCOVER: SocketOption = SocketOption::new(IPP_IP, 71);
+pub const IP_MTU: SocketOption = SocketOption::new(IPP_IP, 73);
+
+pub trait SockOpts<Opt, Typ> {
+    fn set(&mut self, value: Typ) -> Result<(), Error>;
+    fn get(&mut self) -> Result<Typ, Error>;
+}
+pub fn getsockopt<S: AsRawSocket>(
+    s: &mut S,
+    level: u32,
+    optname: u32,
+    res: &mut [u8],
+) -> Result<(), Error> {
+    let mut optlen = res.len() as i32;
+    let raw = s.as_raw_socket();
+    let sock = SOCKET(raw as usize);
+    let level = level as i32;
+    let optname = optname as i32;
+    let res = PSTR(res.as_mut_ptr());
+    unsafe {
+        let res =
+            windows::Win32::Networking::WinSock::getsockopt(sock, level, optname, res, &mut optlen);
+        if res != 0 {
+            return Err(WSA_ERROR(res).into());
+        }
+    }
+    Ok(())
+}
+pub fn getsockopt_u32<S: AsRawSocket>(s: &mut S, level: u32, optname: u32) -> Result<u32, Error> {
+    let mut res = [0u8; 4];
+    getsockopt(s, level, optname, &mut res)?;
+    Ok(u32::from_le_bytes(res))
+}
+pub fn setsockopt<S: AsRawSocket>(
+    s: &mut S,
+    level: u32,
+    optname: u32,
+    optval: Option<&[u8]>,
+) -> Result<(), Error> {
+    let raw = s.as_raw_socket();
+    let sock = SOCKET(raw as usize);
+    let level = level as i32;
+    let optname = optname as i32;
+
+    unsafe {
+        let res = windows::Win32::Networking::WinSock::setsockopt(sock, level, optname, optval);
+        if res != 0 {
+            return Err(WSA_ERROR(res).into());
+        }
+    }
+    Ok(())
+}
+pub fn setsockopt_u32<S: AsRawSocket>(
+    s: &mut S,
+    level: u32,
+    optname: u32,
+    optval: Option<u32>,
+) -> Result<(), Error> {
+    let optval = optval.map(u32::to_le_bytes);
+    setsockopt(s, level, optname, optval.as_ref().map(<[u8; 4]>::as_slice))?;
+    Ok(())
+}
+pub struct SoRecvBuf;
+impl<T> SockOpts<SoRecvBuf, u32> for T
+where
+    T: AsRawSocket,
+{
+    fn set(&mut self, value: u32) -> Result<(), Error> {
+        setsockopt_u32(self, SOL_SOCKET, SO_RCVBUF, Some(value))
+    }
+
+    fn get(&mut self) -> Result<u32, Error> {
+        getsockopt_u32(self, SOL_SOCKET, SO_RCVBUF)
+    }
+}
+pub struct SoSendBuf;
+impl<T> SockOpts<SoSendBuf, u32> for T
+where
+    T: AsRawSocket,
+{
+    fn set(&mut self, value: u32) -> Result<(), Error> {
+        setsockopt_u32(self, SOL_SOCKET, SO_SNDBUF, Some(value))
+    }
+
+    fn get(&mut self) -> Result<u32, Error> {
+        getsockopt_u32(self, SOL_SOCKET, SO_SNDBUF)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::error::Error;
+    use crate::net::{SoRecvBuf, SoSendBuf, SockOpts};
+    use std::net::UdpSocket;
+
+    #[test]
+    pub fn test_getrecvbuf() -> Result<(), Error> {
+        let mut sock = UdpSocket::bind("127.0.0.1:0")?;
+        let recvbuf = SockOpts::<SoRecvBuf, _>::get(&mut sock)?;
+        println!("recvbuf: {recvbuf}");
+        assert_ne!(0, recvbuf);
+        Ok(())
+    }
+
+    #[test]
+    pub fn test_getsendbuf() -> Result<(), Error> {
+        let mut sock = UdpSocket::bind("127.0.0.1:0")?;
+        let sendbuf = SockOpts::<SoSendBuf, _>::get(&mut sock)?;
+        println!("sendbuf: {sendbuf}");
+        assert_ne!(0, sendbuf);
+        Ok(())
+    }
+}
