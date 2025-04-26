@@ -226,7 +226,7 @@ pub trait FTimeConversions {
 }
 impl FTimeConversions for FILETIME {
     fn to_nt_timestamp(&self) -> WindowsNTTimestamp {
-        let hns: u64 = (self.dwHighDateTime as u64) << 32 | self.dwLowDateTime as u64;
+        let hns: u64 = ((self.dwHighDateTime as u64) << 32) | self.dwLowDateTime as u64;
         let sec: f64 = hns as f64 / 1e7;
         WindowsNTTimestamp::from_seconds_f64(sec)
     }

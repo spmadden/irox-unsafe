@@ -18,9 +18,9 @@ members = [
 ]
 
 [workspace.dependencies]
-windows = {version = "0.56.0", default-features = false, features = []}
+windows = {version = "0.57", default-features = false, features = ["std"]}
 criterion = "0.5"
-core_affinity = "0.8.1"
+core_affinity = "0.8.3"
 
 # Lints last updated for Rust 1.74.0
 [workspace.lints.rust]
