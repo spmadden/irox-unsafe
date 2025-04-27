@@ -1,0 +1,39 @@
+[package]
+name = "irox-simd"
+description = "SIMD implementations of some algorithms used in IROX"
+keywords = ["irox", "irox-unsafe"]
+categories = ["algorithms", "embedded"]
+version= "0.1.0"
+edition.workspace = true
+authors.workspace = true
+homepage.workspace = true
+license.workspace = true
+exclude.workspace = true
+repository.workspace = true
+readme = "README.md"
+
+[lints]
+workspace = true
+
+[features]
+default = []
+
+[dependencies]
+irox-tools = {version = "0.10", features = [], path="/proj/irox4/libraries/tools"}
+irox-bits = {version = "0.4", features = [], path="/proj/irox4/libraries/bits"}
+
+[dev-dependencies]
+criterion = "0.5"
+irox-tools = {version = "0.10", features = ["std"], path="/proj/irox4/libraries/tools"}
+irox-bits = {version = "0.4", features = ["std"], path="/proj/irox4/libraries/bits"}
+
+[lib]
+bench = false
+
+[[bench]]
+name = "hashes"
+harness = false
+
+[[test]]
+name = "blake2tests"
+required-features = ["irox-tools/std", "irox-bits/std"]

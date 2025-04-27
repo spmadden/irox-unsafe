@@ -15,6 +15,7 @@ members = [
     "libraries/arch-x86_64",
     "libraries/safe-linux",
     "libraries/safe-windows",
+    "libraries/simd",
 ]
 
 [workspace.dependencies]
