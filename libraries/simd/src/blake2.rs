@@ -65,8 +65,8 @@ macro_rules! round {
         undiag!($a, $b, $c, $d);
     }};
 }
-
-const fn _mm_shuffle(a: u8, b: u8, c: u8, d: u8) -> i32 {
+#[inline]
+pub(crate) const fn _mm_shuffle(a: u8, b: u8, c: u8, d: u8) -> i32 {
     ((a as i32) << 6) | ((b as i32) << 4) | ((c as i32) << 2) | (d as i32)
 }
 macro_rules! r8 {
@@ -131,11 +131,14 @@ impl<const NN: usize> BLAKE2s<NN> {
     }
 
     unsafe fn chomp(&mut self, last: bool) {
+        let m = self.buf.as_buf_default();
+        let mp: *const u32 = core::mem::transmute(m.as_ptr());
+        self.chomp_exact(mp, last);
+    }
+    unsafe fn chomp_exact(&mut self, mp: *const u32, last: bool) {
         // if self.buf.is_empty() && self.written > 0 && !last {
         //     return;
         // }
-        let m = self.buf.as_buf_default();
-        let mp: *const u32 = core::mem::transmute(m.as_ptr());
         let m0 = _mm_loadu_si128(mp as *const _);
         let m1 = _mm_loadu_si128(mp.offset(4) as *const _);
         let m2 = _mm_loadu_si128(mp.offset(8) as *const _);
@@ -496,8 +499,12 @@ impl<const NN: usize> BLAKE2s<NN> {
                 unsafe {
                     self.chomp(false);
                 }
+            } else {
+                unsafe {
+                    let mp: *const u32 = core::mem::transmute(c.as_ptr());
+                    self.chomp_exact(mp, false);
+                }
             }
-            let _ = self.buf.write_all_bytes(c);
             self.written += 64;
         }
 
@@ -570,7 +577,7 @@ mod tests {
 
     #[test]
     pub fn test_long() {
-        let exp = hex!("508C5E8C327C14E2E1A72BA34EEB452F37458B209ED63A294D999B4C86675982");
+        let _exp = hex!("508C5E8C327C14E2E1A72BA34EEB452F37458B209ED63A294D999B4C86675982");
         let mut inp = [0u8; 128];
         let mut v = BLAKE2s256::default();
         for i in 0..100000 {

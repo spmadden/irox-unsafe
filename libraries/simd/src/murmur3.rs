@@ -1,11 +1,20 @@
+use crate::blake2::_mm_shuffle;
 use irox_bits::{array_split_8, MutBits};
 use irox_tools::buf::{Buffer, FixedU8Buf};
+use std::arch::x86_64::{
+    __m256i, _mm256_add_epi32, _mm256_cvtsi256_si32, _mm256_loadu_si256, _mm256_mul_epu32,
+    _mm256_or_si256, _mm256_set1_epi32, _mm256_set_epi32, _mm256_setzero_si256,
+    _mm256_shuffle_epi32, _mm256_slli_si256, _mm256_srli_epi32, _mm256_srli_si256,
+    _mm256_unpacklo_epi32, _mm256_xor_si256,
+};
 use std::ops::BitXorAssign;
 
 const C1: u64 = 0x87c3_7b91_1142_53d5;
 const C2: u64 = 0x4cf5_ad43_2745_937f;
 const C3: u64 = 0xff51_afd7_ed55_8ccd;
 const C4: u64 = 0xc4ce_b9fe_1a85_ec53;
+const C5: u32 = 0xCC9E2D51;
+const C6: u32 = 0x1B873593;
 
 macro_rules! fmix64 {
     ($k:expr) => {
@@ -15,6 +24,159 @@ macro_rules! fmix64 {
         $k = $k.wrapping_mul(C4);
         $k.bitxor_assign($k >> 33);
     };
+}
+
+macro_rules! round32 {
+    ($h:expr, $k:expr) => {
+        *$h ^= $k.wrapping_mul(C5).rotate_left(15).wrapping_mul(C6);
+        *$h = $h.rotate_left(13);
+        *$h = $h.wrapping_mul(5).wrapping_add(0xe6546b64);
+    };
+}
+macro_rules! C5 {
+    () => {
+        _mm256_set1_epi32(C5)
+    };
+}
+macro_rules! round32_8x_simd {
+    ($h:expr, $k:expr) => {
+        *$h ^= $k.wrapping_mul(C5).rotate_left(15).wrapping_mul(C6);
+        *$h = $h.rotate_left(13);
+        *$h = $h.wrapping_mul(5).wrapping_add(0xe6546b64);
+    };
+}
+macro_rules! mul32 {
+    ($a:expr,$b:expr) => {
+        _mm256_unpacklo_epi32(
+            _mm256_shuffle_epi32::<{ _mm_shuffle(0, 0, 2, 0) }>(_mm256_mul_epu32($a, $b)),
+            _mm256_shuffle_epi32::<{ _mm_shuffle(0, 0, 2, 0) }>(_mm256_mul_epu32(
+                _mm256_srli_si256::<4>($a),
+                _mm256_srli_si256::<4>($b),
+            )),
+        )
+    };
+}
+macro_rules! rotl32 {
+    ($a:expr,$b:literal) => {
+        _mm256_or_si256(
+            _mm256_slli_si256::<$b>($a),
+            _mm256_srli_si256::<{ 32 - $b }>($a),
+        )
+    };
+}
+pub struct Murmur3_32 {
+    h: __m256i,
+    buf: FixedU8Buf<32>,
+    total_len: u64,
+}
+impl Murmur3_32 {
+    pub fn new() -> Self {
+        Self::new_seeded(0)
+    }
+    pub fn new_seeded(seed: u32) -> Self {
+        let seed = unsafe { _mm256_set1_epi32(seed as i32) };
+        Self {
+            h: seed,
+            total_len: 0,
+            buf: Default::default(),
+        }
+    }
+    pub fn write(&mut self, mut key: &[u8]) {
+        let align = 4 - self.buf.len();
+        if align < 4 && align < key.len() {
+            let (a, b) = key.split_at(align);
+            key = b;
+            for val in a {
+                let _ = self.buf.write_u8(*val);
+                self.total_len += 1;
+                if self.buf.is_full() {
+                    self.try_chomp();
+                }
+            }
+        }
+        let mut chunks = key.chunks_exact(32);
+        for c in chunks.by_ref() {
+            unsafe {
+                self.chomp8(&c);
+            }
+            self.total_len += 32;
+        }
+        for b in chunks.remainder() {
+            let _ = self.buf.push_back(*b);
+            self.total_len += 1;
+            self.try_chomp();
+        }
+    }
+    fn try_chomp(&mut self) {
+        if !self.buf.is_full() {
+            return;
+        }
+        let k = self.buf.as_buf_default();
+        unsafe {
+            self.chomp8(&k);
+        }
+    }
+    unsafe fn chomp8(&mut self, buf: &[u8]) {
+        if buf.len() < 32 {
+            return;
+        }
+        let e1 = _mm256_set_epi32(
+            0xA329EB99u32 as i32,
+            0xBE6214AEu32 as i32,
+            0x4DC33A4D,
+            0x1FCC49A2,
+            0xC9031C00u32 as i32,
+            0x4093AEE0,
+            0xB33F1B01u32 as i32,
+            0xB19CE1AAu32 as i32,
+        );
+        let e2 = _mm256_set_epi32(
+            0xC3059BF0u32 as i32,
+            0x4A99D300,
+            0x55FEC879,
+            0x82A03CCEu32 as i32,
+            0x91BB3DDDu32 as i32,
+            0x1E919393,
+            0xA39B1CE1u32 as i32,
+            0xDE33BB89u32 as i32,
+        );
+        let k = _mm256_loadu_si256(buf.as_ptr() as *const _);
+        let k = mul32!(k, e1);
+        let k = rotl32!(k, 17);
+        let k = mul32!(k, e2);
+        self.h = _mm256_xor_si256(self.h, k);
+        self.h = rotl32!(self.h, 13);
+        self.h = mul32!(self.h, _mm256_set1_epi32(5));
+        self.h = _mm256_add_epi32(self.h, _mm256_set1_epi32(0x3B11A33C));
+    }
+    pub fn hash(mut self, key: &[u8]) -> u32 {
+        self.write(key);
+        self.finish()
+    }
+    pub fn finish(mut self) -> u32 {
+        if !self.buf.is_empty() {
+            let b = self.buf.as_buf_default();
+            unsafe {
+                self.chomp8(&b);
+            }
+        }
+        let mut h = self.h;
+        let l = self.total_len;
+        unsafe {
+            h = _mm256_xor_si256(h, _mm256_set1_epi32(l as i32));
+            h = _mm256_xor_si256(h, _mm256_srli_epi32::<16>(h));
+            h = mul32!(h, _mm256_set1_epi32(0xC2AD39BBu32 as i32));
+            h = _mm256_xor_si256(h, _mm256_srli_epi32::<13>(h));
+            h = mul32!(h, _mm256_set1_epi32(0xE037A692u32 as i32));
+            h = _mm256_xor_si256(h, _mm256_srli_epi32::<16>(h));
+            let mut out = 0u32;
+            for _ in 0..8 {
+                out ^= _mm256_cvtsi256_si32(h) as u32;
+                h = _mm256_srli_si256::<4>(h);
+            }
+            out
+        }
+    }
 }
 
 #[derive(Default)]
@@ -153,8 +315,9 @@ impl Murmur3_128 {
 #[cfg(test)]
 mod test {
     extern crate alloc;
-    use crate::murmur3::Murmur3_128;
+    use crate::murmur3::{Murmur3_128, Murmur3_32};
     use alloc::vec::Vec;
+    use irox_tools::assert_eq_hex;
 
     #[test]
     pub fn tests() {
@@ -209,6 +372,33 @@ mod test {
             hash.write(data.as_bytes());
             let hash = hash.finish();
             assert_eq!(exp, hash);
+        }
+    }
+
+    #[test]
+    pub fn test_32() {
+        let tests = [
+            ("", 0x00000000u32, 0x00000000u32),
+            ("", 0x00000001, 0x514E28B7),
+            ("", 0xFFFFFFFF, 0x81F16F39),
+            ("test", 0x00000000, 0xBA6BD213),
+            ("test", 0x9747B28C, 0x704B81DC),
+            ("Hello, world!", 0x00000000, 0xC0363E43),
+            ("Hello, world!", 0x9747B28C, 0x24884CBA),
+            (
+                "The quick brown fox jumps over the lazy dog",
+                0x00000000,
+                0x2E4FF723,
+            ),
+            (
+                "The quick brown fox jumps over the lazy dog",
+                0x9747B28C,
+                0x2FA826CD,
+            ),
+        ];
+        for (inp, seed, exp) in tests {
+            let hash = Murmur3_32::new_seeded(seed).hash(inp.as_bytes());
+            assert_eq_hex!(exp, hash);
         }
     }
 }

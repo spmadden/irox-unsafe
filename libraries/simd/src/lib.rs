@@ -6,4 +6,4 @@
 //!
 
 pub mod blake2;
-pub mod murmur3;
+//pub mod murmur3;

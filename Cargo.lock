@@ -275,17 +275,17 @@ checksum = "039836f9a3b7f965f135d89db2de2259a27c0ab63b9493f49fce88ae08750bc1"
 dependencies = [
  "irox-bits 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "irox-carto",
- "irox-enums",
+ "irox-enums 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "irox-imagery",
  "irox-log",
  "irox-networking",
  "irox-stats",
  "irox-structs",
  "irox-threading",
- "irox-time",
+ "irox-time 0.4.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "irox-tools 0.10.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "irox-types",
- "irox-units",
+ "irox-units 0.4.7 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -312,10 +312,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3cb17e23f636bfce1c3d0914dd559c369d44ae9732cd925345f6a2bf83fabf2c"
 dependencies = [
  "irox-csv",
- "irox-enums",
- "irox-time",
+ "irox-enums 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "irox-time 0.4.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "irox-tools 0.10.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "irox-units",
+ "irox-units 0.4.7 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -330,6 +330,13 @@ dependencies = [
 [[package]]
 name = "irox-derive-helpers"
 version = "0.1.0"
+dependencies = [
+ "irox-tools 0.10.3",
+]
+
+[[package]]
+name = "irox-derive-helpers"
+version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d208706b78af9b7f64733e9eb10abd9cfc5f6d2222206083e246d0d97cc8c441"
 dependencies = [
@@ -339,10 +346,25 @@ dependencies = [
 [[package]]
 name = "irox-enums"
 version = "0.2.2"
+dependencies = [
+ "irox-enums_derive 0.2.3",
+]
+
+[[package]]
+name = "irox-enums"
+version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ac9e2ef0ec6807c038e3067d3644e8284fbe3f8626c0d6469edf3499af716b7a"
 dependencies = [
- "irox-enums_derive",
+ "irox-enums_derive 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "irox-enums_derive"
+version = "0.2.3"
+dependencies = [
+ "irox-derive-helpers 0.1.0",
+ "syn",
 ]
 
 [[package]]
@@ -351,8 +373,15 @@ version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "380e2c38ebe968f2c0881c39413df16a9774058aa95315d98b420779bd8db9ef"
 dependencies = [
- "irox-derive-helpers",
+ "irox-derive-helpers 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "syn",
+]
+
+[[package]]
+name = "irox-fixedmath"
+version = "0.1.2"
+dependencies = [
+ "irox-tools 0.10.3",
 ]
 
 [[package]]
@@ -375,7 +404,7 @@ dependencies = [
  "irox-log",
  "irox-tools 0.10.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "irox-types",
- "irox-units",
+ "irox-units 0.4.7 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -384,7 +413,7 @@ version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "278dab6730531669d90d749da113b05942630fcf9aff34839fda0572e8e7102b"
 dependencies = [
- "irox-time",
+ "irox-time 0.4.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "irox-tools 0.10.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "log",
 ]
@@ -396,7 +425,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1b5a2e558d3ecdb0b8778d60ede3c0fb8949730988cb204da854d01da91f0e4e"
 dependencies = [
  "irox-bits 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "irox-enums",
+ "irox-enums 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "irox-structs",
  "irox-tools 0.10.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "log",
@@ -406,7 +435,7 @@ dependencies = [
 name = "irox-safe-linux"
 version = "0.1.2"
 dependencies = [
- "irox-enums",
+ "irox-enums 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -426,6 +455,7 @@ version = "0.1.0"
 dependencies = [
  "criterion",
  "irox-bits 0.4.2",
+ "irox-time 0.4.9",
  "irox-tools 0.10.3",
 ]
 
@@ -436,10 +466,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4384b386033d70cd1564a843fef47d3917c4ed49da70ecbdb73035ce4f1b8c60"
 dependencies = [
  "irox-bits 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "irox-time",
+ "irox-time 0.4.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "irox-tools 0.10.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "irox-types",
- "irox-units",
+ "irox-units 0.4.7 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -458,7 +488,7 @@ version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8338c775bffd3e53437aff3132aa6bca02d6e0a3e73eeb3e71aea47927b00b91"
 dependencies = [
- "irox-derive-helpers",
+ "irox-derive-helpers 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "irox-tools 0.10.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "irox-types",
  "quote",
@@ -477,13 +507,23 @@ dependencies = [
 [[package]]
 name = "irox-time"
 version = "0.4.9"
+dependencies = [
+ "irox-enums 0.2.2",
+ "irox-fixedmath 0.1.2",
+ "irox-tools 0.10.3",
+ "irox-units 0.4.7",
+]
+
+[[package]]
+name = "irox-time"
+version = "0.4.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bb79816e87f2f190ab08b83f5e4436b32b5bbab3dd4449c63b615025c7df6241"
 dependencies = [
- "irox-enums",
- "irox-fixedmath",
+ "irox-enums 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "irox-fixedmath 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "irox-tools 0.10.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "irox-units",
+ "irox-units 0.4.7 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -509,10 +549,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "199750e9242835968a2a37a4d5d827ba99a6dca963b274542f8905c334555746"
 dependencies = [
  "irox-bits 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "irox-enums",
- "irox-enums_derive",
+ "irox-enums 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "irox-enums_derive 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "irox-tools 0.10.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "syn",
+]
+
+[[package]]
+name = "irox-units"
+version = "0.4.7"
+dependencies = [
+ "irox-tools 0.10.3",
 ]
 
 [[package]]

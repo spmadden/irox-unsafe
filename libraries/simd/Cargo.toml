@@ -26,6 +26,8 @@ irox-bits = {version = "0.4", features = [], path="/proj/irox4/libraries/bits"}
 criterion = "0.5"
 irox-tools = {version = "0.10", features = ["std"], path="/proj/irox4/libraries/tools"}
 irox-bits = {version = "0.4", features = ["std"], path="/proj/irox4/libraries/bits"}
+irox-time = {version = "0.4", features = ["std"], path = "/proj/irox4/libraries/time"}
+
 
 [lib]
 bench = false
