@@ -1,14 +1,17 @@
 #![allow(clippy::unwrap_used)]
 #![allow(clippy::print_stdout)]
 #![allow(clippy::print_stderr)]
+use irox_tools::hash::HashAlgorithm::BLAKE2s256;
+use std::io::Read;
+use std::path::PathBuf;
 use irox_bits::Error;
 use irox_tools::buf::ZeroedBuffer;
 use irox_tools::hex::to_hex_str_lower;
-use std::io::Read;
-use std::path::PathBuf;
+
 fn main() -> Result<(), Error> {
+
     let mut hasher = irox_simd::blake2::BLAKE2s256::default();
-    let path: PathBuf = "/proj/BLAKE2/b2sum/test10grand".into();
+    let path : PathBuf = "/dev/shm/test1G".into();
     let mut file = std::fs::OpenOptions::new()
         .read(true)
         .write(false)
@@ -16,15 +19,17 @@ fn main() -> Result<(), Error> {
         .truncate(false)
         .open(&path)?;
     let filelen = file.metadata()?.len();
-    let (tx, rx) = std::sync::mpsc::sync_channel(30);
-    let join = std::thread::spawn(move || loop {
-        let mut buf = <Vec<u8> as ZeroedBuffer>::new_zeroed(2048 * 2048);
-        let read = file.read(&mut buf).unwrap();
-        if read == 0 {
-            break;
+    let (tx,rx) = std::sync::mpsc::sync_channel(3);
+    let join = std::thread::spawn(move || {
+        loop {
+            let mut buf = <Vec<u8> as ZeroedBuffer>::new_zeroed(1024 * 1024);
+            let read = file.read(&mut buf).unwrap();
+            if read == 0 {
+                break;
+            }
+            buf.truncate(read);
+            tx.send(buf).unwrap();
         }
-        buf.truncate(read);
-        tx.send(buf).unwrap();
     });
     let mut iter = 0;
     let start = irox_time::epoch::UnixTimestamp::now();

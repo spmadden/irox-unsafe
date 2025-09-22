@@ -484,13 +484,13 @@ impl<const NN: usize> BLAKE2s<NN> {
         if !self.buf.is_empty() && v.len() > rem {
             let (a, b) = v.split_at(rem);
             v = b;
-            let _ = self.buf.write_all_bytes(a);
+            let _ = self.buf.append(a);
+            self.written += a.len() as u64;
             if self.buf.is_full() {
                 unsafe {
                     self.chomp(false);
                 }
             }
-            self.written += a.len() as u64;
         }
 
         let mut chunks = v.chunks_exact(64);
@@ -505,6 +505,7 @@ impl<const NN: usize> BLAKE2s<NN> {
                     self.chomp_exact(mp, false);
                 }
             }
+            let _ = self.buf.append(c);
             self.written += 64;
         }
 
@@ -580,7 +581,7 @@ mod tests {
         let _exp = hex!("508C5E8C327C14E2E1A72BA34EEB452F37458B209ED63A294D999B4C86675982");
         let mut inp = [0u8; 128];
         let mut v = BLAKE2s256::default();
-        for i in 0..100000 {
+        for i in 0..1_000_000 {
             v.write(&inp);
             inp[0] = inp[0].wrapping_add(i as u8);
         }

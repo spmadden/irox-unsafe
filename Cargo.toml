@@ -23,6 +23,9 @@ windows = {version = "0.57", default-features = false, features = ["std"]}
 criterion = "0.5"
 core_affinity = "0.8.3"
 
+[profile.test]
+opt-level = 1
+
 # Lints last updated for Rust 1.74.0
 [workspace.lints.rust]
 
