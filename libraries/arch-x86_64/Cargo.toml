@@ -16,9 +16,15 @@ readme = "README.md"
 workspace = true
 
 [dependencies]
+irox-enums = "0.2.2"
+irox-enums_derive = "0.2.4"
 
 [dev-dependencies]
 criterion.workspace = true
+
+[features]
+default = []
+std = []
 
 [lib]
 bench = false

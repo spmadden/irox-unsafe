@@ -3,7 +3,7 @@
 //
 
 use core::arch::x86_64::{_rdrand32_step, _rdrand64_step};
-use std::arch::x86_64::{_rdseed32_step, _rdseed64_step};
+use core::arch::x86_64::{_rdseed32_step, _rdseed64_step};
 
 ///
 /// Wrapper around the `rdrand64` instruction
