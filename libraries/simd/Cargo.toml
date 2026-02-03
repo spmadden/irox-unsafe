@@ -19,14 +19,14 @@ workspace = true
 default = []
 
 [dependencies]
-irox-tools = {version = "0.10", features = [], path="/proj/irox4/libraries/tools"}
-irox-bits = {version = "0.4", features = [], path="/proj/irox4/libraries/bits"}
+irox-tools = {version = "0.11", features = []}
+irox-bits = {version = "0.5", features = []}
 
 [dev-dependencies]
 criterion = "0.5"
-irox-tools = {version = "0.10", features = ["std"], path="/proj/irox4/libraries/tools"}
-irox-bits = {version = "0.4", features = ["std"], path="/proj/irox4/libraries/bits"}
-irox-time = {version = "0.4", features = ["std"], path = "/proj/irox4/libraries/time"}
+irox-tools = {version = "0.11", features = ["std"]}
+irox-bits = {version = "0.5", features = ["std"]}
+irox-time = {version = "0.5", features = ["std"]}
 
 
 [lib]

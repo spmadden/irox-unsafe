@@ -8,7 +8,7 @@ use core::ops::BitXorAssign;
 use irox_bits::{MutBits, WriteToLEBits};
 use irox_tools::buf::Buffer;
 use irox_tools::buf::FixedU8Buf;
-use irox_tools::hash::HashDigest;
+use irox_tools::hash::{HashAlgorithm, HashDigest};
 use std::arch::x86_64::{
     __m128i, _mm_add_epi32, _mm_alignr_epi8, _mm_blend_epi16, _mm_castps_si128, _mm_castsi128_ps,
     _mm_loadu_si128, _mm_set_epi8, _mm_setzero_si128, _mm_shuffle_epi32, _mm_shuffle_epi8,
@@ -544,6 +544,10 @@ impl<const NN: usize> HashDigest<32, NN> for BLAKE2s<NN> {
         todo!()
     }
     fn write(&mut self, _: &[u8]) {
+        todo!()
+    }
+
+    fn algorithm() -> HashAlgorithm {
         todo!()
     }
 }
