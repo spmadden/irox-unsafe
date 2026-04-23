@@ -6,7 +6,7 @@
 //! Error Numbers (ERRNOs)
 
 use core::fmt::{Debug, Formatter};
-use irox_enums::EnumName;
+use irox::enums::EnumName;
 
 #[derive(Copy, Clone, Eq, PartialEq, EnumName)]
 pub enum Errno {

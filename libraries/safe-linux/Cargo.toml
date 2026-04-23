@@ -16,4 +16,7 @@ readme = "README.md"
 workspace = true
 
 [dependencies]
-irox-enums = "^0"
+
+[dependencies.irox]
+version = "0"
+features = ["enums"]
