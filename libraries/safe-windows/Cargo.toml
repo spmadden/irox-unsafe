@@ -27,9 +27,15 @@ irox-structs = "0"
 version = "0"
 features = ["structs", "bits", "tools", "log", "enums", "std", "time", "units"]
 
+[target.'cfg(windows)'.dependencies]
+windows-core = {workspace = true }
 [target.'cfg(windows)'.dependencies.windows]
 workspace = true
 features = [
+    "ApplicationModel",
+    "Foundation_Collections",
+    "Management_Deployment",
+    "Security_Cryptography_Certificates",
     "Win32_Foundation",
     "Win32_Security_Credentials",
     "Win32_Graphics_Gdi",
@@ -37,17 +43,35 @@ features = [
     "Win32_System_ProcessStatus",
     "Win32_System_SystemInformation",
     "Win32_System_Memory",
+    "Win32_System_Com",
     "Win32_System_Console",
     "Win32_System_IO",
     "Win32_System_Registry",
     "Win32_Storage_FileSystem",
     "Win32_Security",
+    "Win32_Security_Cryptography",
+    "Win32_UI",
+    "Win32_UI_Shell",
+    "Win32_UI_Shell_Common",
     "Win32_System_Threading",
     "Win32_Networking_WinSock",
+    "Win32_Networking_WindowsWebServices",
     "Win32_NetworkManagement_IpHelper",
     "Win32_NetworkManagement_Ndis",
+    "Win32_NetworkManagement_NetManagement",
+    "Win32_NetworkManagement_WiFi",
+]
+[target.'cfg(windows)'.dev-dependencies.windows]
+workspace = true
+features = [
+    "Win32_System_WinRT",
+    "Security",
+    "Security_Credentials",
+    "Security_Credentials_UI"
 ]
 
 [dev-dependencies]
 tokio = {version = "1.44", features = ["full"]}
 irox = {version = "0", features = ["threading"]}
+windows-future.workspace = true
+windows-core.workspace = true

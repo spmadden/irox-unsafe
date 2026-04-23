@@ -135,6 +135,7 @@ impl_error!(std::ffi::NulError, "FFI");
 impl_error!(std::io::Error, "IOError");
 impl_error!(irox::bits::Error, "BitsError");
 impl_error!(std::string::FromUtf16Error, "UTF16Error");
+impl_error!(irox::structs::Error, "StructsError");
 
 #[cfg(windows)]
 impl_error!(windows::core::Error, "WindowsErr");

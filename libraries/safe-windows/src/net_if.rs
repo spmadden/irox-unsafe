@@ -35,12 +35,12 @@ impl From<&MIB_IPINTERFACE_ROW> for IfInfo {
 
             min_router_advertisement_interval: value.MinRouterAdvertisementInterval,
             max_router_advertisement_interval: value.MaxRouterAdvertisementInterval,
-            advertising_enabled: value.AdvertisingEnabled.as_bool(),
-            forwarding_enabled: value.ForwardingEnabled.as_bool(),
-            weak_host_send: value.WeakHostSend.as_bool(),
-            weak_host_receive: value.WeakHostReceive.as_bool(),
-            use_automatic_metric: value.UseAutomaticMetric.as_bool(),
-            connected: value.Connected.as_bool(),
+            advertising_enabled: value.AdvertisingEnabled,
+            forwarding_enabled: value.ForwardingEnabled,
+            weak_host_send: value.WeakHostSend,
+            weak_host_receive: value.WeakHostReceive,
+            use_automatic_metric: value.UseAutomaticMetric,
+            connected: value.Connected,
         }
     }
 }

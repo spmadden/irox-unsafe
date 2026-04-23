@@ -1,10 +1,9 @@
 use std::ffi::c_void;
 use std::mem::size_of_val;
-
-use windows::core::imp::CoTaskMemFree;
-use windows::core::{HSTRING, PCWSTR, PWSTR};
+use std::ops::Deref;
+use windows::core::{BOOL, HSTRING, PCWSTR, PWSTR};
 use windows::Win32::Foundation::{
-    BOOL, ERROR_ACCESS_DENIED, ERROR_ACCOUNT_DISABLED, ERROR_CANCELLED, ERROR_INVALID_FLAGS,
+    ERROR_ACCESS_DENIED, ERROR_ACCOUNT_DISABLED, ERROR_CANCELLED, ERROR_INVALID_FLAGS,
     ERROR_INVALID_PARAMETER, ERROR_LOGON_FAILURE, ERROR_NOT_FOUND, ERROR_NO_SUCH_LOGON_SESSION,
     ERROR_PASSWORD_EXPIRED, HWND, WIN32_ERROR,
 };
@@ -15,7 +14,7 @@ use windows::Win32::Security::Credentials::{
     CREDUIWIN_CHECKBOX, CREDUIWIN_FLAGS, CREDUIWIN_GENERIC, CREDUI_INFOW,
     CRED_PACK_GENERIC_CREDENTIALS, CRED_PERSIST_LOCAL_MACHINE, CRED_TYPE_GENERIC,
 };
-
+use windows::Win32::System::Com::CoTaskMemFree;
 use crate::error::Error;
 
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
@@ -108,8 +107,8 @@ fn error_code(code: u32) -> &'static str {
 /// # Safety
 /// Calls the windows functions [`CredUIPromptForWindowsCredentialsW`], [`CredUnPackAuthenticationBufferW`] and [`CoTaskMemFree`]
 pub fn prompt(options: &PromptOptions) -> Result<Credentials, Error> {
-    let psz_subtitle_text = options.subtitle_text.as_ref().map(HSTRING::as_ptr);
-    let psz_title_text = options.title_text.as_ref().map(HSTRING::as_ptr);
+    let psz_subtitle_text = options.subtitle_text.as_deref().map(<[u16]>::as_ptr);
+    let psz_title_text = options.title_text.as_deref().map(<[u16]>::as_ptr);
 
     // can't chain the options above with these, as the ptr MUST outlive the slices
     let psz_title_text = psz_title_text.map(PCWSTR).unwrap_or(PCWSTR::null());
@@ -117,10 +116,10 @@ pub fn prompt(options: &PromptOptions) -> Result<Credentials, Error> {
 
     let mut info = CREDUI_INFOW {
         cbSize: 0,
-        hwndParent: HWND(0),
+        hwndParent: HWND(0 as _),
         pszMessageText: psz_subtitle_text,
         pszCaptionText: psz_title_text,
-        hbmBanner: HBITMAP(0),
+        hbmBanner: HBITMAP(0 as _),
     };
     info.cbSize = size_of_val(&info) as u32;
 
@@ -169,15 +168,15 @@ pub fn prompt(options: &PromptOptions) -> Result<Credentials, Error> {
             dwflags,                 // CRED_PACK_FLAGS,
             ppvoutauthbuffer,        // *const c_void,
             puloutauthbuffersize[0], // u32
-            pszusername,             // PWSTR
+            Some(pszusername),             // Option<PWSTR>
             &mut pcchlmaxusername,   // *mut u32
-            PWSTR::null(),           // PWSTR,
+            None        ,           // Option<PWSTR>,
             None,                    // Option<*mut u32>
-            pszpassword,             // PWSTR,
+            Some(pszpassword),             // Option<PWSTR>,
             &mut pcchlmaxpassword,   // *mut u32
         );
 
-        CoTaskMemFree(ppvoutauthbuffer);
+        CoTaskMemFree(Some(ppvoutauthbuffer));
 
         if let Err(e) = res {
             return Err(e.into());
@@ -211,7 +210,7 @@ pub fn read_cred(target_name: &str) -> Result<Credentials, Error> {
         let res = CredReadW(
             PCWSTR(target_name.as_ptr()), // LPCWSTR
             dtype,                        // DWORD
-            0,                            // flags: DWORD
+            None,                            // flags: DWORD
             credential,
         );
         if let Err(e) = res {
@@ -240,11 +239,11 @@ pub fn read_cred(target_name: &str) -> Result<Credentials, Error> {
                 dwflags,                        // CRED_PACK_FLAGS,
                 blob.as_ptr() as *const c_void, // *const c_void,
                 blob_size as u32,               // u32
-                pszusername,                    // PWSTR
+                Some(pszusername),                    // Option<PWSTR>
                 &mut pcchlmaxusername,          // *mut u32
-                PWSTR::null(),                  // PWSTR,
+                None,                  // Option<PWSTR>,
                 None,                           // Option<*mut u32>
-                pszpassword,                    // PWSTR,
+                Some(pszpassword),                    // Option<PWSTR>,
                 &mut pcchlmaxpassword,          // *mut u32
             )?;
         }
@@ -342,7 +341,7 @@ pub fn read_or_prompt_and_save(
 pub fn delete_cred(target: &str) -> Result<(), Error> {
     let target = str_2_widenullstr(target);
     unsafe {
-        if let Err(e) = CredDeleteW(PCWSTR(target.as_ptr()), CRED_TYPE_GENERIC, 0) {
+        if let Err(e) = CredDeleteW(PCWSTR(target.as_ptr()), CRED_TYPE_GENERIC, None) {
             if e.code() != ERROR_NOT_FOUND.into() {
                 return Err(e.into());
             }
@@ -352,7 +351,7 @@ pub fn delete_cred(target: &str) -> Result<(), Error> {
 }
 
 fn str_2_widenullstr(val: &str) -> Vec<u16> {
-    let mut buf = HSTRING::from(val).as_wide().to_vec();
+    let mut buf = HSTRING::from(val).to_vec();
     buf.push(0);
     buf
 }

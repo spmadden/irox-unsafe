@@ -54,7 +54,7 @@ impl From<SystemHives> for RegKey {
     }
 }
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub struct KEY(isize);
+pub struct KEY(*mut core::ffi::c_void);
 impl From<SystemHives> for KEY {
     fn from(value: SystemHives) -> Self {
         KEY(value.get_hkey().0)

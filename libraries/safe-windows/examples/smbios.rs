@@ -21,7 +21,9 @@ fn main() -> Result<(), Error> {
     let second = read_next_table(&mut tables)?;
     println!("second table: {second:#?}");
     let third = read_next_table(&mut tables)?;
-    println!("second table: {third:#?}");
+    println!("third table: {third:#?}");
+    let fourth = read_next_table(&mut tables)?;
+    println!("fourth table: {fourth:#?}");
 
     tables.hexdump();
 

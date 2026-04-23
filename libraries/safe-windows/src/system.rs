@@ -222,17 +222,15 @@ pub fn get_process_times() -> Result<ProcessTimes, Error> {
 
 pub trait FTimeConversions {
     fn to_nt_timestamp(&self) -> WindowsNTTimestamp;
-    fn to_duration(&self) -> Duration;
+    fn to_duration(&self) -> Duration {
+        self.to_nt_timestamp().get_offset()
+    }
 }
 impl FTimeConversions for FILETIME {
     fn to_nt_timestamp(&self) -> WindowsNTTimestamp {
         let hns: u64 = ((self.dwHighDateTime as u64) << 32) | self.dwLowDateTime as u64;
         let sec: f64 = hns as f64 / 1e7;
         WindowsNTTimestamp::from_seconds_f64(sec)
-    }
-
-    fn to_duration(&self) -> Duration {
-        self.to_nt_timestamp().get_offset()
     }
 }
 

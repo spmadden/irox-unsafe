@@ -5,6 +5,7 @@ use std::pin::Pin;
 use std::task::{Context, Poll};
 
 use windows::core::PSTR;
+use windows::Win32::Foundation::HANDLE;
 use windows::Win32::Networking::WinSock::*;
 use windows::Win32::System::IO::OVERLAPPED;
 
@@ -30,7 +31,7 @@ impl AsyncSocket {
             Internal: 0,
             InternalHigh: 0,
             Anonymous: Default::default(),
-            hEvent,
+            hEvent: HANDLE(hEvent.0 as _),
         });
         let lpoverlapped = Some(overlapped.as_mut().get_mut() as *mut OVERLAPPED);
         let lpcompletionroutine = None;
@@ -114,7 +115,7 @@ impl Future for NetFuture<'_> {
 impl Drop for NetFuture<'_> {
     fn drop(&mut self) {
         unsafe {
-            if let Err(_e) = WSACloseEvent(self.overlapped.hEvent) {
+            if let Err(_e) = WSACloseEvent(WSAEVENT(self.overlapped.hEvent.0 as _)) {
                 // check?
             }
         }

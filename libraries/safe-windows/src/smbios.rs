@@ -38,10 +38,10 @@ pub struct SMBIOSHeader {
     pub table_data_length: u32,
 }
 
-pub fn read_next_table<T: MutBits + Bits>(val: &mut T) -> Result<SMBiosTable, Error> {
+pub fn read_next_table<T: Bits>(val: &mut T) -> Result<SMBiosTable, Error> {
     let smtype = val.read_u8()?;
     let len = val.read_u8()? - 2;
-
+    
     match smtype {
         0 => Ok(SMBiosTable::BiosInformation(BIOSInformation::parse_from(
             val, len,
@@ -51,6 +51,9 @@ pub fn read_next_table<T: MutBits + Bits>(val: &mut T) -> Result<SMBiosTable, Er
         )),
         2 => Ok(SMBiosTable::BaseboardInformation(
             BaseboardInformation::parse_from(val)?,
+        )),
+        3 => Ok(SMBiosTable::ChassisInformation(
+            ChassisInformation::parse_from(val)?,
         )),
 
         e => Ok(SMBiosTable::Unknown(e)),
@@ -68,6 +71,7 @@ pub enum SMBiosTable {
     BiosInformation(BIOSInformation),
     SystemInformation(SystemInformation),
     BaseboardInformation(BaseboardInformation),
+    ChassisInformation(ChassisInformation),
     Unknown(u8),
 }
 
@@ -87,7 +91,7 @@ pub struct BIOSInformation {
     pub extbios_rom_size: u16,
 }
 impl BIOSInformation {
-    pub fn parse_from<T: Bits + MutBits>(val: &mut T, len: u8) -> Result<BIOSInformation, Error> {
+    pub fn parse_from<T: Bits>(val: &mut T, len: u8) -> Result<Self, Error> {
         let handle = val.read_le_u16()?;
         let vendor_stridx = val.read_u8()?;
         let bios_version_stridx = val.read_u8()?;
@@ -172,7 +176,7 @@ pub struct SystemInformation {
 }
 
 impl SystemInformation {
-    pub fn parse_from<T: Bits + MutBits>(val: &mut T) -> Result<SystemInformation, Error> {
+    pub fn parse_from<T: Bits>(val: &mut T) -> Result<Self, Error> {
         let handle = val.read_le_u16()?;
         let manuf_stridx = val.read_u8()?;
         let prodname_stridx = val.read_u8()?;
@@ -235,7 +239,7 @@ pub struct BaseboardInformation {
     pub object_handles: Vec<u16>,
 }
 impl BaseboardInformation {
-    pub fn parse_from<T: Bits + MutBits>(val: &mut T) -> Result<BaseboardInformation, Error> {
+    pub fn parse_from<T: Bits>(val: &mut T) -> Result<Self, Error> {
         let handle = val.read_le_u16()?;
         let manuf_stridx = val.read_u8()?;
         let product_stridx = val.read_u8()?;
@@ -275,8 +279,77 @@ impl BaseboardInformation {
         })
     }
 }
+#[derive(Debug)]
+pub struct ChassisInformation {
+    pub handle: u16,
+    pub manufacturer: Option<String>,
+    pub chassis_type: u8,
+    pub version: Option<String>,
+    pub serial_number: Option<String>,
+    pub asset_tag: Option<String>,
+    pub bootup_state: u8,
+    pub power_supply_state: u8,
+    pub thermal_state: u8,
+    pub security_status: u8,
+    pub oem_defined: u32,
+    pub height: u8,
+    pub number_of_power_cords: u8,
+    pub sku: Option<String>,
+    pub rack_type: Option<u8>,
+    pub rack_height: Option<u8>,
+}
+impl ChassisInformation {
+    pub fn parse_from<T: Bits>(val: &mut T) -> Result<Self, Error> {
+        let handle = val.read_le_u16()?;
+        let manuf_stridx = val.read_u8()?;
+        let chassis_type = val.read_u8()?;
+        let version_stridx = val.read_u8()?;
+        let serno_stridx = val.read_u8()?;
+        let assettag_stridx = val.read_u8()?;
+        let bootup_state = val.read_u8()?;
+        let power_supply_state = val.read_u8()?;
+        let thermal_state = val.read_u8()?;
+        let security_status = val.read_u8()?;
+        let oem_defined = val.read_le_u32()?;
+        let height = val.read_u8()?;
+        let number_of_power_cords = val.read_u8()?;
+        let conelemcnt = val.read_u8()? as usize;
+        let conelemlen = val.read_u8()? as usize;
 
-fn read_null_terminated_str<T: Bits + MutBits>(val: &mut T) -> Result<String, Error> {
+        val.advance(conelemcnt * conelemlen)?;
+        let sku_stridx = val.read_u8()?;
+        // let rack_type = val.read_u8()?;
+        // let rack_height = val.read_u8()?;
+
+        let strs = read_str_table(val)?;
+        let manufacturer = get_str_from_table!(strs, manuf_stridx);
+        let version = get_str_from_table!(strs, version_stridx);
+        let serial_number = get_str_from_table!(strs, serno_stridx);
+        let asset_tag = get_str_from_table!(strs, assettag_stridx);
+        let sku = get_str_from_table!(strs, sku_stridx);
+        Ok(Self {
+            handle,
+            manufacturer,
+            chassis_type,
+            version,
+            serial_number,
+            asset_tag,
+            bootup_state,
+            power_supply_state,
+            thermal_state,
+            security_status,
+            oem_defined,
+            height,
+            number_of_power_cords,
+
+            sku,
+            rack_type: None,
+            rack_height: None,
+        })
+    }
+}
+
+fn read_null_terminated_str<T: Bits>(val: &mut T) -> Result<String, Error> {
     let mut out = String::new();
     loop {
         let read = val.read_u8()?;
@@ -288,7 +361,7 @@ fn read_null_terminated_str<T: Bits + MutBits>(val: &mut T) -> Result<String, Er
     Ok(out)
 }
 
-fn read_str_table<T: Bits + MutBits>(val: &mut T) -> Result<Vec<String>, Error> {
+fn read_str_table<T: Bits>(val: &mut T) -> Result<Vec<String>, Error> {
     let mut strs = Vec::new();
     loop {
         let read_str = read_null_terminated_str(val)?;
