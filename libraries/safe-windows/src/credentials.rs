@@ -1,6 +1,5 @@
 use std::ffi::c_void;
 use std::mem::size_of_val;
-use std::ops::Deref;
 use windows::core::{BOOL, HSTRING, PCWSTR, PWSTR};
 use windows::Win32::Foundation::{
     ERROR_ACCESS_DENIED, ERROR_ACCOUNT_DISABLED, ERROR_CANCELLED, ERROR_INVALID_FLAGS,

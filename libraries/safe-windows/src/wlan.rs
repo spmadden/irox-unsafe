@@ -5,17 +5,18 @@
 use crate::error::Error;
 use crate::types::SaferToString;
 use core::slice;
+use std::collections::{HashMap};
+use irox::time::datetime::UTCDateTime;
+use irox::time::epoch::{FromTimestamp, UnixTimestamp, WindowsNTTimestamp};
+use irox::time::Duration;
 use std::fmt::{Debug, Display, Formatter};
 use std::io::Write;
-use irox::time::datetime::UTCDateTime;
-use irox::time::Duration;
-use irox::time::epoch::{FromTimestamp, UnixTimestamp, WindowsNTTimestamp};
+use std::ops::Deref;
+use std::sync::{Arc, Condvar, Mutex, RwLock};
+use irox::tools::static_init;
 use windows::Win32::Foundation::HANDLE;
-use windows::Win32::NetworkManagement::WiFi::{
-    WlanCloseHandle, WlanEnumInterfaces, WlanFreeMemory, WlanGetNetworkBssList, WlanOpenHandle,
-    WlanScan, DOT11_BSS_TYPE, WLAN_BSS_ENTRY, WLAN_BSS_LIST, WLAN_INTERFACE_INFO_LIST,
-};
-use windows_core::{ GUID, PCWSTR};
+use windows::Win32::NetworkManagement::WiFi::{WlanCloseHandle, WlanEnumInterfaces, WlanFreeMemory, WlanGetNetworkBssList, WlanOpenHandle, WlanRegisterNotification, WlanScan, DOT11_BSS_TYPE, DOT11_SSID, L2_NOTIFICATION_DATA, WLAN_BSS_ENTRY, WLAN_BSS_LIST, WLAN_INTERFACE_INFO_LIST, WLAN_NOTIFICATION_SOURCE_ACM, WLAN_NOTIFICATION_SOURCE_ALL, WLAN_NOTIFICATION_SOURCE_NONE, WLAN_RAW_DATA};
+use windows_core::{GUID, PCWSTR};
 
 pub struct WlanAPI {
     handle: HANDLE,
@@ -102,7 +103,10 @@ impl Display for WlanBSS {
             .field("in_reg_domain", &self.in_reg_domain)
             .field("beacon_period_us", &self.beacon_period_us.to_string())
             .field("bss_uptime", &uptime)
-            .field("host_timestamp", &self.host_timestamp.format_iso8601_extended())
+            .field(
+                "host_timestamp",
+                &self.host_timestamp.format_iso8601_extended(),
+            )
             .field("capability_information", &self.capability_information)
             .field("ch_center_frequency", &self.ch_center_frequency)
             .field("rate_set", &self.rate_set)
@@ -114,16 +118,89 @@ pub struct WlanInterface<'a> {
     pub guid: GUID,
     pub description: String,
 }
+static_init!(scans_in_progress, RwLock<HashMap<GUID, Arc<(Mutex<bool>, Condvar)>>>, {
+    RwLock::new(HashMap::new())
+});
+unsafe extern "system" fn callback(
+    param0: *mut L2_NOTIFICATION_DATA,
+    _param1: *mut std::ffi::c_void,
+) {
+    if !param0.is_null() {
+        let p0 = *param0;
+        if p0.NotificationSource != WLAN_NOTIFICATION_SOURCE_ACM {
+            return;
+        }
+        if p0.NotificationCode != 0x07 {
+            return;
+        }
+        if let Ok(mut lock) = scans_in_progress().write() {
+            if let Some(var) = lock.remove(&p0.InterfaceGuid) {
+                let dr = var.deref();
+                if let Ok(mut lock) = dr.0.lock() {
+                    *lock = true;
+                }
+                dr.1.notify_all();
+            }
+        }
+    }
+}
+impl<'a> Drop for WlanInterface<'a> {
+    fn drop(&mut self) {
+        unsafe {
+            WlanRegisterNotification(
+                self.handle.clone(),
+                WLAN_NOTIFICATION_SOURCE_NONE,
+                false,
+                None,
+                None,
+                None,
+                None,
+            );
+        }
+    }
+}
 impl<'a> WlanInterface<'a> {
-    pub fn request_scan(&'a self) -> Result<(), Error> {
+    pub fn reg_callback(&'a self) {
+        unsafe {
+            let _res = WlanRegisterNotification(
+                self.handle.clone(),
+                WLAN_NOTIFICATION_SOURCE_ALL,
+                false,
+                Some(callback),
+                None,
+                None,
+                None,
+            );
+        }
+    }
+    pub fn request_scan(&'a self, ssid_in: Option<&str>) -> Result<(), Error> {
+        let pair = Arc::new((Mutex::new(false), Condvar::new()));
         unsafe {
             let handle = self.handle.clone();
-            let res = WlanScan(handle, &self.guid, None, None, None);
+            let raw = WLAN_RAW_DATA::default();
+            self.reg_callback();
+            if let Ok(mut lock) = scans_in_progress().write() {
+                lock.entry(self.guid).or_insert_with(|| pair.clone());
+            }
+            let res = {
+                if let Some(ssid_in) = ssid_in {
+                    let mut ssid = DOT11_SSID::default();
+                    write!(ssid.ucSSID.as_mut_slice(), "{ssid_in}")?;
+                    WlanScan(handle, &self.guid, Some(&ssid), Some(&raw), None)
+                } else {
+                    WlanScan(handle, &self.guid, None, Some(&raw), None)
+                }
+            };
             if res != 0 {
                 return Error::code(res, "Error requesting scan");
             }
         }
-        std::thread::sleep(std::time::Duration::from_secs(4));
+        let (lock, cvar) = &*pair;
+        let mut started = lock.lock().unwrap();
+        while !*started {
+            started = cvar.wait(started).unwrap();
+        }
+        // std::thread::sleep(std::time::Duration::from_secs(10));
         Ok(())
     }
     pub fn list_bss(&'a self) -> Result<Vec<WlanBSS>, Error> {
@@ -160,10 +237,11 @@ impl<'a> WlanInterface<'a> {
 
             let items = slice::from_raw_parts(p, itemcount);
             for (_idx, bss) in items.iter().enumerate() {
-                let host_timestamp = WindowsNTTimestamp::from_seconds_f64(bss.ullHostTimestamp as f64 / 1e7);
+                let host_timestamp =
+                    WindowsNTTimestamp::from_seconds_f64(bss.ullHostTimestamp as f64 / 1e7);
                 let host_timestamp: UnixTimestamp = UnixTimestamp::from_timestamp(&host_timestamp);
-                let iesize = bss.ulIeSize;
-                let ieoffset = bss.ulIeOffset;
+                let _iesize = bss.ulIeSize;
+                let _ieoffset = bss.ulIeOffset;
 
                 let val = WlanBSS {
                     ssid: bss.dot11Ssid.to_string_safer(),
@@ -207,6 +285,7 @@ impl Debug for WlanInterface<'_> {
 }
 #[cfg(test)]
 mod tests {
+    use irox::time::datetime::UTCDateTime;
     use crate::error::Error;
     use crate::wlan::WlanAPI;
 
@@ -215,10 +294,12 @@ mod tests {
         let api = WlanAPI::open()?;
         let interfaces = api.get_interfaces()?;
         for i in interfaces {
-            i.request_scan()?;
+            i.request_scan(None)?;
             let bss_list = i.list_bss()?;
+            let now = UTCDateTime::now();
             for bss in bss_list {
-                println!("{bss:#}");
+                let delta = (now - bss.host_timestamp).as_seconds_f32();
+                println!("BSS: {} // {delta}", bss.ssid);
             }
         }
         Ok(())
