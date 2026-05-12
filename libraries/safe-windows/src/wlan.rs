@@ -43,7 +43,8 @@ impl WlanAPI {
 
     pub fn get_interfaces(&self) -> Result<Vec<WlanInterface<'_>>, Error> {
         let mut out = Vec::new();
-        let mut list: *mut WLAN_INTERFACE_INFO_LIST = Default::default();
+        let mut list = WLAN_INTERFACE_INFO_LIST::default();
+        let mut list: *mut WLAN_INTERFACE_INFO_LIST = &mut list;
         unsafe {
             let res = WlanEnumInterfaces(self.handle, None, &mut list);
             if res != 0 {
@@ -127,7 +128,8 @@ impl<'a> WlanInterface<'a> {
     }
     pub fn list_bss(&'a self) -> Result<Vec<WlanBSS>, Error> {
         let mut out = Vec::new();
-        let mut list: *mut WLAN_BSS_LIST = Default::default();
+        let mut list = WLAN_BSS_LIST::default();
+        let mut list: *mut WLAN_BSS_LIST = &mut list;
         let handle = self.handle.clone();
         let bss_any = DOT11_BSS_TYPE(3);
         unsafe {
